@@ -196,6 +196,7 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
         initialViewState={{ longitude: 136, latitude: 36, zoom: 4 }}
         style={{ width: "100%", height: "100%" }}
         mapStyle="mapbox://styles/mapbox/light-v11"
+        projection="mercator"
         onClick={handleMapClick}
         cursor="auto"
         onLoad={(e) => applyMapLanguage(e.target, lang)}
