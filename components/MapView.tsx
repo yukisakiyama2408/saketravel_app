@@ -49,15 +49,34 @@ const unclusteredPointLayer: LayerSpecification = {
   },
 };
 
+type Lang = "ja" | "en";
+
 type Props = {
   regions: Region[];
   focusRegion?: Region | null;
   onFocusConsumed?: () => void;
 };
 
+function applyMapLanguage(map: mapboxgl.Map, lang: Lang) {
+  const layers = map.getStyle()?.layers ?? [];
+  for (const layer of layers) {
+    if (layer.type === "symbol") {
+      const field = (layer as { layout?: Record<string, unknown> }).layout?.["text-field"];
+      if (field) {
+        map.setLayoutProperty(layer.id, "text-field", [
+          "coalesce",
+          ["get", `name_${lang}`],
+          ["get", "name"],
+        ]);
+      }
+    }
+  }
+}
+
 export default function MapView({ regions, focusRegion, onFocusConsumed }: Props) {
   const mapRef = useRef<MapRef>(null);
   const [selectedRegion, setSelectedRegion] = useState<Region | null>(null);
+  const [lang, setLang] = useState<Lang>("ja");
 
   useEffect(() => {
     if (!focusRegion) return;
@@ -68,6 +87,13 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
     setSelectedRegion(focusRegion);
     onFocusConsumed?.();
   }, [focusRegion]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    const map = mapRef.current?.getMap();
+    if (map?.isStyleLoaded()) {
+      applyMapLanguage(map, lang);
+    }
+  }, [lang]);
 
   const geojson: GeoJSON.FeatureCollection = {
     type: "FeatureCollection",
@@ -132,6 +158,7 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
         mapStyle="mapbox://styles/mapbox/light-v11"
         onClick={handleMapClick}
         cursor="auto"
+        onLoad={(e) => applyMapLanguage(e.target, lang)}
       >
         <Source
           id="regions"
@@ -151,6 +178,30 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
         region={selectedRegion}
         onClose={() => setSelectedRegion(null)}
       />
+
+      {/* 言語切り替えボタン */}
+      <div className="absolute bottom-4 right-4 flex rounded-full overflow-hidden border border-[#0D1B2A]/20 shadow-md text-xs font-medium">
+        <button
+          onClick={() => setLang("ja")}
+          className={`px-3 py-1.5 transition-colors ${
+            lang === "ja"
+              ? "bg-[#0D1B2A] text-[#E8A045]"
+              : "bg-[#F8F3EC] text-[#0D1B2A]/50 hover:text-[#0D1B2A]"
+          }`}
+        >
+          日本語
+        </button>
+        <button
+          onClick={() => setLang("en")}
+          className={`px-3 py-1.5 transition-colors ${
+            lang === "en"
+              ? "bg-[#0D1B2A] text-[#E8A045]"
+              : "bg-[#F8F3EC] text-[#0D1B2A]/50 hover:text-[#0D1B2A]"
+          }`}
+        >
+          EN
+        </button>
+      </div>
     </div>
   );
 }
