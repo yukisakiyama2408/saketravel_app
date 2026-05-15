@@ -6,6 +6,7 @@ import type { MapMouseEvent, LayerSpecification } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
 import type { Region } from "@/types";
 import RegionPanel from "./RegionPanel";
+import SearchBox from "./SearchBox";
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!;
 
@@ -65,6 +66,18 @@ export default function MapView({ regions }: Props) {
     })),
   };
 
+  const handleSelectFromSearch = useCallback((region: Region) => {
+    const map = mapRef.current?.getMap();
+    if (map) {
+      map.flyTo({
+        center: [region.longitude, region.latitude],
+        zoom: 8,
+        duration: 1500,
+      });
+    }
+    setSelectedRegion(region);
+  }, []);
+
   const handleMapClick = useCallback(
     async (e: MapMouseEvent) => {
       const map = mapRef.current?.getMap();
@@ -98,6 +111,7 @@ export default function MapView({ regions }: Props) {
 
   return (
     <div className="relative w-full h-full">
+      <SearchBox onSelectRegion={handleSelectFromSearch} />
       <Map
         ref={mapRef}
         mapboxAccessToken={MAPBOX_TOKEN}
