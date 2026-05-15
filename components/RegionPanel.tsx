@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/components/AuthProvider";
 import LoginModal from "@/components/LoginModal";
-import type { Region, Drink } from "@/types";
+import RecordModal from "@/components/RecordModal";
+import type { Region, Drink, DrinkRecord } from "@/types";
 
 type Tab = "climate" | "food" | "drinks";
 
@@ -18,7 +19,9 @@ export default function RegionPanel({ region, onClose }: Props) {
   const [activeTab, setActiveTab] = useState<Tab>("climate");
   const [drinks, setDrinks] = useState<Drink[]>([]);
   const [selectedDrink, setSelectedDrink] = useState<Drink | null>(null);
+  const [record, setRecord] = useState<DrinkRecord | null>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showRecordModal, setShowRecordModal] = useState(false);
 
   useEffect(() => {
     if (!region) {
@@ -34,6 +37,22 @@ export default function RegionPanel({ region, onClose }: Props) {
       .then(({ data }) => setDrinks(data ?? []));
   }, [region]);
 
+  useEffect(() => {
+    if (!selectedDrink || !user) {
+      setRecord(null);
+      return;
+    }
+    supabase
+      .from("records")
+      .select("*")
+      .eq("drink_id", selectedDrink.id)
+      .eq("user_id", user.id)
+      .order("date", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => setRecord(data));
+  }, [selectedDrink, user]);
+
   const visible = region !== null;
   const otherDrinks = drinks.filter((d) => d.id !== selectedDrink?.id);
 
@@ -41,6 +60,25 @@ export default function RegionPanel({ region, onClose }: Props) {
     <>
       {showLoginModal && (
         <LoginModal onClose={() => setShowLoginModal(false)} />
+      )}
+
+      {showRecordModal && selectedDrink && (
+        <RecordModal
+          drink={selectedDrink}
+          onClose={() => setShowRecordModal(false)}
+          onSaved={() => {
+            // 保存後に記録を再取得してボタンを更新
+            supabase
+              .from("records")
+              .select("*")
+              .eq("drink_id", selectedDrink.id)
+              .eq("user_id", user!.id)
+              .order("date", { ascending: false })
+              .limit(1)
+              .maybeSingle()
+              .then(({ data }) => setRecord(data));
+          }}
+        />
       )}
 
       {visible && (
@@ -153,17 +191,29 @@ export default function RegionPanel({ region, onClose }: Props) {
                   <p className="text-sm text-[#0D1B2A]/40">説明情報準備中</p>
                 )}
 
-                <button
-                  onClick={() => {
-                    if (!user) {
-                      setShowLoginModal(true);
-                    }
-                    // Phase 7: 記録モーダルを開く
-                  }}
-                  className="mt-5 w-full bg-[#E8A045] text-white rounded-xl py-3 text-sm font-semibold active:opacity-70"
-                >
-                  飲んだ ✓
-                </button>
+                {record ? (
+                  <div className="mt-5 w-full bg-[#0D1B2A]/8 border border-[#0D1B2A]/10 rounded-xl py-3 px-4 text-center">
+                    <p className="text-sm font-semibold text-[#0D1B2A]">✓ 記録済み</p>
+                    <p className="text-xs text-[#0D1B2A]/50 mt-0.5">
+                      {new Date(record.date).toLocaleDateString("ja-JP", {
+                        year: "numeric", month: "long", day: "numeric",
+                      })}
+                    </p>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => {
+                      if (!user) {
+                        setShowLoginModal(true);
+                      } else {
+                        setShowRecordModal(true);
+                      }
+                    }}
+                    className="mt-5 w-full bg-[#E8A045] text-white rounded-xl py-3 text-sm font-semibold active:opacity-70"
+                  >
+                    飲んだ ✓
+                  </button>
+                )}
 
                 {otherDrinks.length > 0 && (
                   <div className="mt-6">

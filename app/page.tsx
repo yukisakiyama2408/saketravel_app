@@ -1,8 +1,8 @@
 import { supabase } from "@/lib/supabase";
-import MapView from "@/components/MapView";
+import AppShell from "@/components/AppShell";
 
 export default async function Home() {
   const { data: regions } = await supabase.from("regions").select("*");
 
-  return <MapView regions={regions ?? []} />;
+  return <AppShell regions={regions ?? []} />;
 }

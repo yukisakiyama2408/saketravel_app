@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import Map, { Source, Layer, MapRef } from "react-map-gl/mapbox";
 import type { MapMouseEvent, LayerSpecification } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
@@ -51,11 +51,23 @@ const unclusteredPointLayer: LayerSpecification = {
 
 type Props = {
   regions: Region[];
+  focusRegion?: Region | null;
+  onFocusConsumed?: () => void;
 };
 
-export default function MapView({ regions }: Props) {
+export default function MapView({ regions, focusRegion, onFocusConsumed }: Props) {
   const mapRef = useRef<MapRef>(null);
   const [selectedRegion, setSelectedRegion] = useState<Region | null>(null);
+
+  useEffect(() => {
+    if (!focusRegion) return;
+    const map = mapRef.current?.getMap();
+    if (map) {
+      map.flyTo({ center: [focusRegion.longitude, focusRegion.latitude], zoom: 8, duration: 1500 });
+    }
+    setSelectedRegion(focusRegion);
+    onFocusConsumed?.();
+  }, [focusRegion]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const geojson: GeoJSON.FeatureCollection = {
     type: "FeatureCollection",
