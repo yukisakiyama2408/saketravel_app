@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/components/AuthProvider";
 import LoginModal from "@/components/LoginModal";
@@ -114,6 +115,12 @@ export default function RegionPanel({ region, regionRecords = [], onClose, onRec
                 <p className="text-sm text-[#0D1B2A]/60">
                   {selectedDrink ? selectedDrink.genre : region.country}
                 </p>
+                <Link
+                  href={selectedDrink ? `/drinks/${selectedDrink.id}` : `/regions/${region.id}`}
+                  className="text-xs text-[#E8A045] font-medium mt-1 inline-block"
+                >
+                  詳細を見る →
+                </Link>
               </div>
               <button
                 onClick={onClose}

@@ -33,3 +33,22 @@ export type RecordWithJoin = DrinkRecord & {
   drinks: Drink;
   regions: Region;
 };
+
+export type Dish = {
+  id: string;
+  name: string;
+  region_id: string;
+  description: string | null;
+  pairing_drink_ids: string[] | null;
+};
+
+export type Store = {
+  id: string;
+  name: string;
+  address: string | null;
+  hours: string | null;
+  genre: string | null;
+  google_maps_url: string | null;
+  region_ids: string[] | null;
+  drink_ids: string[] | null;
+};
