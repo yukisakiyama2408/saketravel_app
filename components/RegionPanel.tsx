@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/components/AuthProvider";
+import LoginModal from "@/components/LoginModal";
 import type { Region, Drink } from "@/types";
 
 type Tab = "climate" | "food" | "drinks";
@@ -12,9 +14,11 @@ type Props = {
 };
 
 export default function RegionPanel({ region, onClose }: Props) {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>("climate");
   const [drinks, setDrinks] = useState<Drink[]>([]);
   const [selectedDrink, setSelectedDrink] = useState<Drink | null>(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   useEffect(() => {
     if (!region) {
@@ -35,6 +39,10 @@ export default function RegionPanel({ region, onClose }: Props) {
 
   return (
     <>
+      {showLoginModal && (
+        <LoginModal onClose={() => setShowLoginModal(false)} />
+      )}
+
       {visible && (
         <div className="fixed inset-0 z-10" onClick={onClose} />
       )}
@@ -144,6 +152,18 @@ export default function RegionPanel({ region, onClose }: Props) {
                 ) : (
                   <p className="text-sm text-[#0D1B2A]/40">説明情報準備中</p>
                 )}
+
+                <button
+                  onClick={() => {
+                    if (!user) {
+                      setShowLoginModal(true);
+                    }
+                    // Phase 7: 記録モーダルを開く
+                  }}
+                  className="mt-5 w-full bg-[#E8A045] text-white rounded-xl py-3 text-sm font-semibold active:opacity-70"
+                >
+                  飲んだ ✓
+                </button>
 
                 {otherDrinks.length > 0 && (
                   <div className="mt-6">
