@@ -5,21 +5,23 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/components/AuthProvider";
 import LoginModal from "@/components/LoginModal";
 import RecordModal from "@/components/RecordModal";
-import type { Region, Drink, DrinkRecord } from "@/types";
+import type { Region, Drink, DrinkRecord, RecordWithJoin } from "@/types";
 
 type Tab = "climate" | "food" | "drinks";
 
 type Props = {
   region: Region | null;
+  regionRecords?: RecordWithJoin[];
   onClose: () => void;
+  onRecordSaved?: () => void;
 };
 
-export default function RegionPanel({ region, onClose }: Props) {
+export default function RegionPanel({ region, regionRecords = [], onClose, onRecordSaved }: Props) {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>("climate");
   const [drinks, setDrinks] = useState<Drink[]>([]);
   const [selectedDrink, setSelectedDrink] = useState<Drink | null>(null);
-  const [record, setRecord] = useState<DrinkRecord | null>(null);
+  const [drinkRecords, setDrinkRecords] = useState<DrinkRecord[]>([]);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRecordModal, setShowRecordModal] = useState(false);
 
@@ -39,7 +41,7 @@ export default function RegionPanel({ region, onClose }: Props) {
 
   useEffect(() => {
     if (!selectedDrink || !user) {
-      setRecord(null);
+      setDrinkRecords([]);
       return;
     }
     supabase
@@ -48,13 +50,12 @@ export default function RegionPanel({ region, onClose }: Props) {
       .eq("drink_id", selectedDrink.id)
       .eq("user_id", user.id)
       .order("date", { ascending: false })
-      .limit(1)
-      .maybeSingle()
-      .then(({ data }) => setRecord(data));
+      .then(({ data }) => setDrinkRecords(data ?? []));
   }, [selectedDrink, user]);
 
   const visible = region !== null;
   const otherDrinks = drinks.filter((d) => d.id !== selectedDrink?.id);
+  const recordedDrinkIds = new Set(regionRecords.map((r) => r.drink_id));
 
   return (
     <>
@@ -67,16 +68,14 @@ export default function RegionPanel({ region, onClose }: Props) {
           drink={selectedDrink}
           onClose={() => setShowRecordModal(false)}
           onSaved={() => {
-            // 保存後に記録を再取得してボタンを更新
             supabase
               .from("records")
               .select("*")
               .eq("drink_id", selectedDrink.id)
               .eq("user_id", user!.id)
               .order("date", { ascending: false })
-              .limit(1)
-              .maybeSingle()
-              .then(({ data }) => setRecord(data));
+              .then(({ data }) => setDrinkRecords(data ?? []));
+            onRecordSaved?.();
           }}
         />
       )}
@@ -167,7 +166,14 @@ export default function RegionPanel({ region, onClose }: Props) {
                               onClick={() => setSelectedDrink(d)}
                               className="w-full text-left border border-[#0D1B2A]/10 rounded-lg p-3 bg-white hover:bg-[#F8F3EC] transition-colors"
                             >
-                              <p className="font-medium text-[#0D1B2A]">{d.name}</p>
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="font-medium text-[#0D1B2A]">{d.name}</p>
+                                {recordedDrinkIds.has(d.id) && (
+                                  <span className="flex-shrink-0 text-[10px] font-semibold text-[#E8A045] border border-[#E8A045]/40 rounded-full px-2 py-0.5">
+                                    飲んだ ✓
+                                  </span>
+                                )}
+                              </div>
                               <p className="text-xs text-[#0D1B2A]/50 mt-0.5">{d.genre}</p>
                               {d.description && (
                                 <p className="text-xs text-[#0D1B2A]/70 mt-1">{d.description}</p>
@@ -191,28 +197,37 @@ export default function RegionPanel({ region, onClose }: Props) {
                   <p className="text-sm text-[#0D1B2A]/40">説明情報準備中</p>
                 )}
 
-                {record ? (
-                  <div className="mt-5 w-full bg-[#0D1B2A]/8 border border-[#0D1B2A]/10 rounded-xl py-3 px-4 text-center">
-                    <p className="text-sm font-semibold text-[#0D1B2A]">✓ 記録済み</p>
-                    <p className="text-xs text-[#0D1B2A]/50 mt-0.5">
-                      {new Date(record.date).toLocaleDateString("ja-JP", {
-                        year: "numeric", month: "long", day: "numeric",
-                      })}
-                    </p>
+                <button
+                  onClick={() => {
+                    if (!user) {
+                      setShowLoginModal(true);
+                    } else {
+                      setShowRecordModal(true);
+                    }
+                  }}
+                  className="mt-5 w-full bg-[#E8A045] text-white rounded-xl py-3 text-sm font-semibold active:opacity-70"
+                >
+                  飲んだ ✓
+                </button>
+
+                {drinkRecords.length > 0 && (
+                  <div className="mt-5">
+                    <p className="text-xs font-semibold text-[#0D1B2A]/50 tracking-wide mb-3">飲んだ記録</p>
+                    <ul className="space-y-2">
+                      {drinkRecords.map((rec) => (
+                        <li key={rec.id} className="border border-[#0D1B2A]/10 rounded-xl px-4 py-3 bg-white">
+                          <p className="text-xs text-[#0D1B2A]/50">
+                            {new Date(rec.date).toLocaleDateString("ja-JP", {
+                              year: "numeric", month: "long", day: "numeric",
+                            })}
+                          </p>
+                          {rec.memo && (
+                            <p className="text-xs text-[#0D1B2A]/70 mt-1 leading-relaxed">{rec.memo}</p>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                ) : (
-                  <button
-                    onClick={() => {
-                      if (!user) {
-                        setShowLoginModal(true);
-                      } else {
-                        setShowRecordModal(true);
-                      }
-                    }}
-                    className="mt-5 w-full bg-[#E8A045] text-white rounded-xl py-3 text-sm font-semibold active:opacity-70"
-                  >
-                    飲んだ ✓
-                  </button>
                 )}
 
                 {otherDrinks.length > 0 && (

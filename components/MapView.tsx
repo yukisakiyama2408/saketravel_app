@@ -4,7 +4,9 @@ import { useRef, useState, useCallback, useEffect } from "react";
 import Map, { Source, Layer, MapRef } from "react-map-gl/mapbox";
 import type { MapMouseEvent, LayerSpecification } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
-import type { Region } from "@/types";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/components/AuthProvider";
+import type { Region, RecordWithJoin } from "@/types";
 import RegionPanel from "./RegionPanel";
 import SearchBox from "./SearchBox";
 
@@ -49,6 +51,17 @@ const unclusteredPointLayer: LayerSpecification = {
   },
 };
 
+const recordedHaloLayer: LayerSpecification = {
+  id: "recorded-halo",
+  type: "circle",
+  source: "recorded-regions",
+  paint: {
+    "circle-color": "#E8A045",
+    "circle-radius": 17,
+    "circle-opacity": 0.25,
+  },
+};
+
 type Lang = "ja" | "en";
 
 type Props = {
@@ -74,9 +87,20 @@ function applyMapLanguage(map: mapboxgl.Map, lang: Lang) {
 }
 
 export default function MapView({ regions, focusRegion, onFocusConsumed }: Props) {
+  const { user } = useAuth();
   const mapRef = useRef<MapRef>(null);
   const [selectedRegion, setSelectedRegion] = useState<Region | null>(null);
   const [lang, setLang] = useState<Lang>("ja");
+  const [userRecords, setUserRecords] = useState<RecordWithJoin[]>([]);
+
+  useEffect(() => {
+    if (!user) { setUserRecords([]); return; }
+    supabase
+      .from("records")
+      .select("*, drinks(*), regions(*)")
+      .eq("user_id", user.id)
+      .then(({ data }) => setUserRecords((data as RecordWithJoin[]) ?? []));
+  }, [user]);
 
   useEffect(() => {
     if (!focusRegion) return;
@@ -95,6 +119,11 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
     }
   }, [lang]);
 
+  const recordedRegionIds = new Set(userRecords.map((r) => r.region_id));
+  const selectedRegionRecords = selectedRegion
+    ? userRecords.filter((r) => r.region_id === selectedRegion.id)
+    : [];
+
   const geojson: GeoJSON.FeatureCollection = {
     type: "FeatureCollection",
     features: regions.map((r) => ({
@@ -102,6 +131,17 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
       geometry: { type: "Point", coordinates: [r.longitude, r.latitude] },
       properties: { id: r.id },
     })),
+  };
+
+  const recordedGeojson: GeoJSON.FeatureCollection = {
+    type: "FeatureCollection",
+    features: regions
+      .filter((r) => recordedRegionIds.has(r.id))
+      .map((r) => ({
+        type: "Feature",
+        geometry: { type: "Point", coordinates: [r.longitude, r.latitude] },
+        properties: { id: r.id },
+      })),
   };
 
   const handleSelectFromSearch = useCallback((region: Region) => {
@@ -160,6 +200,9 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
         cursor="auto"
         onLoad={(e) => applyMapLanguage(e.target, lang)}
       >
+        <Source id="recorded-regions" type="geojson" data={recordedGeojson}>
+          <Layer {...recordedHaloLayer} />
+        </Source>
         <Source
           id="regions"
           type="geojson"
@@ -176,7 +219,16 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
 
       <RegionPanel
         region={selectedRegion}
+        regionRecords={selectedRegionRecords}
         onClose={() => setSelectedRegion(null)}
+        onRecordSaved={() => {
+          if (!user) return;
+          supabase
+            .from("records")
+            .select("*, drinks(*), regions(*)")
+            .eq("user_id", user.id)
+            .then(({ data }) => setUserRecords((data as RecordWithJoin[]) ?? []));
+        }}
       />
 
       {/* 言語切り替えボタン */}
