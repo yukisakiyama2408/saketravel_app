@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useCallback, useEffect } from "react";
+import { useRef, useState, useCallback, useEffect, useMemo } from "react";
 import Map, { Source, Layer, MapRef } from "react-map-gl/mapbox";
 import type { MapMouseEvent, LayerSpecification } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
@@ -12,6 +12,36 @@ import SearchBox from "./SearchBox";
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!;
 
+// ズームによってドット ↔ エリア塗りを切り替えるしきい値
+const ZOOM_THRESHOLD = 6;
+
+function pointInPolygon(point: [number, number], ring: number[][]): boolean {
+  const [px, py] = point;
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, yi] = ring[i];
+    const [xj, yj] = ring[j];
+    if (yi > py !== yj > py && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi) {
+      inside = !inside;
+    }
+  }
+  return inside;
+}
+
+function regionInFeature(region: Region, feature: GeoJSON.Feature): boolean {
+  const geom = feature.geometry;
+  const pt: [number, number] = [region.longitude, region.latitude];
+  if (geom.type === "Polygon") {
+    return pointInPolygon(pt, (geom as GeoJSON.Polygon).coordinates[0]);
+  }
+  if (geom.type === "MultiPolygon") {
+    return (geom as GeoJSON.MultiPolygon).coordinates.some((poly) =>
+      pointInPolygon(pt, poly[0])
+    );
+  }
+  return false;
+}
+
 const clusterLayer: LayerSpecification = {
   id: "clusters",
   type: "circle",
@@ -20,7 +50,7 @@ const clusterLayer: LayerSpecification = {
   paint: {
     "circle-color": "#E8A045",
     "circle-radius": ["step", ["get", "point_count"], 20, 5, 28, 10, 36],
-    "circle-opacity": 0.9,
+    "circle-opacity": ["interpolate", ["linear"], ["zoom"], ZOOM_THRESHOLD - 1, 0, ZOOM_THRESHOLD, 0.9],
   },
 };
 
@@ -35,6 +65,7 @@ const clusterCountLayer: LayerSpecification = {
   },
   paint: {
     "text-color": "#0D1B2A",
+    "text-opacity": ["interpolate", ["linear"], ["zoom"], ZOOM_THRESHOLD - 1, 0, ZOOM_THRESHOLD, 1],
   },
 };
 
@@ -48,6 +79,8 @@ const unclusteredPointLayer: LayerSpecification = {
     "circle-radius": 10,
     "circle-stroke-width": 2,
     "circle-stroke-color": "#F8F3EC",
+    "circle-opacity": ["interpolate", ["linear"], ["zoom"], ZOOM_THRESHOLD - 1, 0, ZOOM_THRESHOLD, 1],
+    "circle-stroke-opacity": ["interpolate", ["linear"], ["zoom"], ZOOM_THRESHOLD - 1, 0, ZOOM_THRESHOLD, 1],
   },
 };
 
@@ -58,7 +91,28 @@ const recordedHaloLayer: LayerSpecification = {
   paint: {
     "circle-color": "#E8A045",
     "circle-radius": 17,
-    "circle-opacity": 0.25,
+    "circle-opacity": ["interpolate", ["linear"], ["zoom"], ZOOM_THRESHOLD - 1, 0, ZOOM_THRESHOLD, 0.25],
+  },
+};
+
+const prefectureFillLayer: LayerSpecification = {
+  id: "prefecture-fill",
+  type: "fill",
+  source: "prefecture-drinks",
+  paint: {
+    "fill-color": "#E8A045",
+    "fill-opacity": ["interpolate", ["linear"], ["zoom"], ZOOM_THRESHOLD - 1, 0.35, ZOOM_THRESHOLD, 0],
+  },
+};
+
+const prefectureBorderLayer: LayerSpecification = {
+  id: "prefecture-border",
+  type: "line",
+  source: "prefecture-drinks",
+  paint: {
+    "line-color": "#E8A045",
+    "line-width": 1.5,
+    "line-opacity": ["interpolate", ["linear"], ["zoom"], ZOOM_THRESHOLD - 1, 0.8, ZOOM_THRESHOLD, 0],
   },
 };
 
@@ -92,6 +146,14 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
   const [selectedRegion, setSelectedRegion] = useState<Region | null>(null);
   const [lang, setLang] = useState<Lang>("ja");
   const [userRecords, setUserRecords] = useState<RecordWithJoin[]>([]);
+  const [prefectureBase, setPrefectureBase] = useState<GeoJSON.FeatureCollection | null>(null);
+
+  useEffect(() => {
+    fetch("https://raw.githubusercontent.com/dataofjapan/land/master/japan.geojson")
+      .then((r) => r.json())
+      .then((data: GeoJSON.FeatureCollection) => setPrefectureBase(data))
+      .catch(() => {/* 取得失敗時は都道府県塗りをスキップ */});
+  }, []);
 
   useEffect(() => {
     if (!user) { setUserRecords([]); return; }
@@ -143,6 +205,16 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
         properties: { id: r.id },
       })),
   };
+
+  const prefectureDrinksGeojson = useMemo<GeoJSON.FeatureCollection>(() => {
+    if (!prefectureBase) return { type: "FeatureCollection", features: [] };
+    return {
+      type: "FeatureCollection",
+      features: prefectureBase.features.filter((f) =>
+        regions.some((r) => regionInFeature(r, f))
+      ),
+    };
+  }, [prefectureBase, regions]);
 
   const handleSelectFromSearch = useCallback((region: Region) => {
     const map = mapRef.current?.getMap();
@@ -201,6 +273,10 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
         cursor="auto"
         onLoad={(e) => applyMapLanguage(e.target, lang)}
       >
+        <Source id="prefecture-drinks" type="geojson" data={prefectureDrinksGeojson}>
+          <Layer {...prefectureFillLayer} />
+          <Layer {...prefectureBorderLayer} />
+        </Source>
         <Source id="recorded-regions" type="geojson" data={recordedGeojson}>
           <Layer {...recordedHaloLayer} />
         </Source>
