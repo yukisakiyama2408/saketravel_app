@@ -36,7 +36,7 @@ function regionInFeature(region: Region, feature: GeoJSON.Feature): boolean {
   }
   if (geom.type === "MultiPolygon") {
     return (geom as GeoJSON.MultiPolygon).coordinates.some((poly) =>
-      pointInPolygon(pt, poly[0])
+      pointInPolygon(pt, poly[0]),
     );
   }
   return false;
@@ -50,7 +50,15 @@ const clusterLayer: LayerSpecification = {
   paint: {
     "circle-color": "#E8A045",
     "circle-radius": ["step", ["get", "point_count"], 20, 5, 28, 10, 36],
-    "circle-opacity": ["interpolate", ["linear"], ["zoom"], ZOOM_THRESHOLD - 1, 0, ZOOM_THRESHOLD, 0.9],
+    "circle-opacity": [
+      "interpolate",
+      ["linear"],
+      ["zoom"],
+      ZOOM_THRESHOLD - 1,
+      0,
+      ZOOM_THRESHOLD,
+      0.9,
+    ],
   },
 };
 
@@ -65,7 +73,15 @@ const clusterCountLayer: LayerSpecification = {
   },
   paint: {
     "text-color": "#0D1B2A",
-    "text-opacity": ["interpolate", ["linear"], ["zoom"], ZOOM_THRESHOLD - 1, 0, ZOOM_THRESHOLD, 1],
+    "text-opacity": [
+      "interpolate",
+      ["linear"],
+      ["zoom"],
+      ZOOM_THRESHOLD - 1,
+      0,
+      ZOOM_THRESHOLD,
+      1,
+    ],
   },
 };
 
@@ -79,8 +95,24 @@ const unclusteredPointLayer: LayerSpecification = {
     "circle-radius": 10,
     "circle-stroke-width": 2,
     "circle-stroke-color": "#F8F3EC",
-    "circle-opacity": ["interpolate", ["linear"], ["zoom"], ZOOM_THRESHOLD - 1, 0, ZOOM_THRESHOLD, 1],
-    "circle-stroke-opacity": ["interpolate", ["linear"], ["zoom"], ZOOM_THRESHOLD - 1, 0, ZOOM_THRESHOLD, 1],
+    "circle-opacity": [
+      "interpolate",
+      ["linear"],
+      ["zoom"],
+      ZOOM_THRESHOLD - 1,
+      0,
+      ZOOM_THRESHOLD,
+      1,
+    ],
+    "circle-stroke-opacity": [
+      "interpolate",
+      ["linear"],
+      ["zoom"],
+      ZOOM_THRESHOLD - 1,
+      0,
+      ZOOM_THRESHOLD,
+      1,
+    ],
   },
 };
 
@@ -91,7 +123,15 @@ const recordedHaloLayer: LayerSpecification = {
   paint: {
     "circle-color": "#E8A045",
     "circle-radius": 17,
-    "circle-opacity": ["interpolate", ["linear"], ["zoom"], ZOOM_THRESHOLD - 1, 0, ZOOM_THRESHOLD, 0.25],
+    "circle-opacity": [
+      "interpolate",
+      ["linear"],
+      ["zoom"],
+      ZOOM_THRESHOLD - 1,
+      0,
+      ZOOM_THRESHOLD,
+      0.25,
+    ],
   },
 };
 
@@ -101,7 +141,15 @@ const prefectureFillLayer: LayerSpecification = {
   source: "prefecture-drinks",
   paint: {
     "fill-color": "#E8A045",
-    "fill-opacity": ["interpolate", ["linear"], ["zoom"], ZOOM_THRESHOLD - 1, 0.35, ZOOM_THRESHOLD, 0],
+    "fill-opacity": [
+      "interpolate",
+      ["linear"],
+      ["zoom"],
+      ZOOM_THRESHOLD - 1,
+      0.35,
+      ZOOM_THRESHOLD,
+      0,
+    ],
   },
 };
 
@@ -112,7 +160,15 @@ const prefectureBorderLayer: LayerSpecification = {
   paint: {
     "line-color": "#E8A045",
     "line-width": 1.5,
-    "line-opacity": ["interpolate", ["linear"], ["zoom"], ZOOM_THRESHOLD - 1, 0.8, ZOOM_THRESHOLD, 0],
+    "line-opacity": [
+      "interpolate",
+      ["linear"],
+      ["zoom"],
+      ZOOM_THRESHOLD - 1,
+      0.8,
+      ZOOM_THRESHOLD,
+      0,
+    ],
   },
 };
 
@@ -128,7 +184,9 @@ function applyMapLanguage(map: mapboxgl.Map, lang: Lang) {
   const layers = map.getStyle()?.layers ?? [];
   for (const layer of layers) {
     if (layer.type === "symbol") {
-      const field = (layer as { layout?: Record<string, unknown> }).layout?.["text-field"];
+      const field = (layer as { layout?: Record<string, unknown> }).layout?.[
+        "text-field"
+      ];
       if (field) {
         map.setLayoutProperty(layer.id, "text-field", [
           "coalesce",
@@ -140,23 +198,35 @@ function applyMapLanguage(map: mapboxgl.Map, lang: Lang) {
   }
 }
 
-export default function MapView({ regions, focusRegion, onFocusConsumed }: Props) {
+export default function MapView({
+  regions,
+  focusRegion,
+  onFocusConsumed,
+}: Props) {
   const { user } = useAuth();
   const mapRef = useRef<MapRef>(null);
   const [selectedRegion, setSelectedRegion] = useState<Region | null>(null);
   const [lang, setLang] = useState<Lang>("ja");
   const [userRecords, setUserRecords] = useState<RecordWithJoin[]>([]);
-  const [prefectureBase, setPrefectureBase] = useState<GeoJSON.FeatureCollection | null>(null);
+  const [prefectureBase, setPrefectureBase] =
+    useState<GeoJSON.FeatureCollection | null>(null);
 
   useEffect(() => {
-    fetch("https://raw.githubusercontent.com/dataofjapan/land/master/japan.geojson")
+    fetch(
+      "https://raw.githubusercontent.com/dataofjapan/land/master/japan.geojson",
+    )
       .then((r) => r.json())
       .then((data: GeoJSON.FeatureCollection) => setPrefectureBase(data))
-      .catch(() => {/* 取得失敗時は都道府県塗りをスキップ */});
+      .catch(() => {
+        /* 取得失敗時は都道府県塗りをスキップ */
+      });
   }, []);
 
   useEffect(() => {
-    if (!user) { setUserRecords([]); return; }
+    if (!user) {
+      setUserRecords([]);
+      return;
+    }
     supabase
       .from("records")
       .select("*, drinks(*), regions(*)")
@@ -168,7 +238,11 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
     if (!focusRegion) return;
     const map = mapRef.current?.getMap();
     if (map) {
-      map.flyTo({ center: [focusRegion.longitude, focusRegion.latitude], zoom: 8, duration: 1500 });
+      map.flyTo({
+        center: [focusRegion.longitude, focusRegion.latitude],
+        zoom: 8,
+        duration: 1500,
+      });
     }
     setSelectedRegion(focusRegion);
     onFocusConsumed?.();
@@ -211,7 +285,7 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
     return {
       type: "FeatureCollection",
       features: prefectureBase.features.filter((f) =>
-        regions.some((r) => regionInFeature(r, f))
+        regions.some((r) => regionInFeature(r, f)),
       ),
     };
   }, [prefectureBase, regions]);
@@ -239,9 +313,12 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
       });
       if (clusterFeatures.length > 0) {
         const clusterId = clusterFeatures[0].properties?.cluster_id;
-        const source = map.getSource("regions") as unknown as { getClusterExpansionZoom: (id: number) => Promise<number> };
+        const source = map.getSource("regions") as unknown as {
+          getClusterExpansionZoom: (id: number) => Promise<number>;
+        };
         const zoom = await source.getClusterExpansionZoom(clusterId);
-        const coords = (clusterFeatures[0].geometry as GeoJSON.Point).coordinates;
+        const coords = (clusterFeatures[0].geometry as GeoJSON.Point)
+          .coordinates;
         map.easeTo({ center: [coords[0], coords[1]], zoom });
         return;
       }
@@ -256,7 +333,7 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
         setSelectedRegion(region);
       }
     },
-    [regions]
+    [regions],
   );
 
   return (
@@ -273,7 +350,11 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
         cursor="auto"
         onLoad={(e) => applyMapLanguage(e.target, lang)}
       >
-        <Source id="prefecture-drinks" type="geojson" data={prefectureDrinksGeojson}>
+        <Source
+          id="prefecture-drinks"
+          type="geojson"
+          data={prefectureDrinksGeojson}
+        >
           <Layer {...prefectureFillLayer} />
           <Layer {...prefectureBorderLayer} />
         </Source>
@@ -304,7 +385,9 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
             .from("records")
             .select("*, drinks(*), regions(*)")
             .eq("user_id", user.id)
-            .then(({ data }) => setUserRecords((data as RecordWithJoin[]) ?? []));
+            .then(({ data }) =>
+              setUserRecords((data as RecordWithJoin[]) ?? []),
+            );
         }}
       />
 
