@@ -44,6 +44,12 @@ export async function getRegionById(id: string): Promise<Region | null> {
 
 // ── Drink ─────────────────────────────────────────────────────────────────
 
+export async function getAllDrinks(): Promise<Drink[]> {
+  if (USE_MOCK) return mockDrinks;
+  const { data } = await supabase.from("drinks").select("*");
+  return data ?? [];
+}
+
 export async function getDrinksByRegion(regionId: string): Promise<Drink[]> {
   if (USE_MOCK) return mockDrinks.filter((d) => d.region_id === regionId);
   const { data } = await supabase.from("drinks").select("*").eq("region_id", regionId);
