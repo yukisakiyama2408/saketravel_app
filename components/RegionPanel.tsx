@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
-import { getDrinksByRegion, getRecordsByDrink } from "@/lib/data";
+import { getDrinksByRegion, getRecordsByDrink, getStoresByDrink } from "@/lib/data";
 import LoginModal from "@/components/LoginModal";
 import RecordModal from "@/components/RecordModal";
 import SheetHeader from "@/components/SheetHeader";
 import DrinkCard from "@/components/DrinkCard";
-import type { Region, Drink, DrinkRecord, RecordWithJoin } from "@/types";
+import StoreCard from "@/components/StoreCard";
+import type { Region, Drink, DrinkRecord, Store, RecordWithJoin } from "@/types";
 
 type Tab = "climate" | "food" | "drinks";
 
@@ -36,6 +36,7 @@ export default function RegionPanel({
   const [drinks, setDrinks] = useState<Drink[]>([]);
   const [selectedDrink, setSelectedDrink] = useState<Drink | null>(null);
   const [drinkRecords, setDrinkRecords] = useState<DrinkRecord[]>([]);
+  const [stores, setStores] = useState<Store[]>([]);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRecordModal, setShowRecordModal] = useState(false);
 
@@ -47,13 +48,16 @@ export default function RegionPanel({
   }, [region]);
 
   useEffect(() => {
-    if (!selectedDrink || !user) { setDrinkRecords([]); return; }
+    if (!selectedDrink) { setDrinkRecords([]); setStores([]); return; }
+    getStoresByDrink(selectedDrink.id).then(setStores);
+    if (!user) { setDrinkRecords([]); return; }
     getRecordsByDrink(selectedDrink.id, user.id).then(setDrinkRecords);
   }, [selectedDrink, user]);
 
   const visible = region !== null;
   const otherDrinks = drinks.filter((d) => d.id !== selectedDrink?.id);
   const recordedDrinkIds = new Set(regionRecords.map((r) => r.drink_id));
+  const isRecorded = drinkRecords.length > 0;
 
   return (
     <>
@@ -86,79 +90,26 @@ export default function RegionPanel({
         }}
       >
         {region && (
-          <div className="pb-8">
+          <div className="pb-10">
             {/* Handle */}
             <div className="flex justify-center pt-3 pb-1">
-              <div
-                className="w-10 h-1 rounded-full"
-                style={{ background: "var(--ink-20)" }}
-              />
+              <div className="w-10 h-1 rounded-full" style={{ background: "var(--ink-20)" }} />
             </div>
-
-            {/* ── Header ── */}
-            {!selectedDrink ? (
-              /* 4-1: Region view header */
-              <SheetHeader
-                kicker={region.country}
-                title={region.name}
-                sub={drinks.length > 0 ? `${drinks.length}銘柄` : undefined}
-                link="地域の詳細を見る"
-                linkHref={`/regions/${region.id}`}
-                onClose={onClose}
-              />
-            ) : (
-              /* Drink view header — Phase 5 で詳細更新予定 */
-              <div className="flex items-start justify-between px-5 pt-4 pb-3">
-                <div className="flex-1 min-w-0 pr-4">
-                  <button
-                    onClick={() => setSelectedDrink(null)}
-                    className="text-sm font-medium mb-1 flex items-center gap-1"
-                    style={{ color: "var(--amber)" }}
-                  >
-                    ← {region.name}に戻る
-                  </button>
-                  <h2
-                    className="text-xl font-bold leading-snug"
-                    style={{ fontFamily: "var(--font-serif)", color: "var(--ink)" }}
-                  >
-                    {selectedDrink.name}
-                  </h2>
-                  <p className="text-sm mt-0.5" style={{ color: "var(--ink-50)" }}>
-                    {selectedDrink.genre}
-                  </p>
-                  <Link
-                    href={`/drinks/${selectedDrink.id}`}
-                    className="text-xs font-medium mt-1 inline-block"
-                    style={{ color: "var(--amber)" }}
-                  >
-                    銘柄の詳細を見る →
-                  </Link>
-                </div>
-                <button
-                  onClick={onClose}
-                  className="flex-shrink-0 flex items-center justify-center rounded-full"
-                  style={{
-                    width: 32,
-                    height: 32,
-                    background: "var(--ink-04)",
-                    color: "var(--ink-50)",
-                    fontSize: 18,
-                    lineHeight: 1,
-                  }}
-                >
-                  ×
-                </button>
-              </div>
-            )}
 
             {/* ── Region view ── */}
             {!selectedDrink && (
               <>
-                {/* 4-2: Tabs */}
-                <div
-                  className="flex px-5"
-                  style={{ borderBottom: "1px solid var(--ink-08)" }}
-                >
+                <SheetHeader
+                  kicker={region.country}
+                  title={region.name}
+                  sub={drinks.length > 0 ? `${drinks.length}銘柄` : undefined}
+                  link="地域の詳細を見る"
+                  linkHref={`/regions/${region.id}`}
+                  onClose={onClose}
+                />
+
+                {/* Tabs */}
+                <div className="flex px-5" style={{ borderBottom: "1px solid var(--ink-08)" }}>
                   {TABS.map((tab) => (
                     <button
                       key={tab.key}
@@ -169,8 +120,7 @@ export default function RegionPanel({
                           activeTab === tab.key
                             ? "2px solid var(--amber)"
                             : "2px solid transparent",
-                        color:
-                          activeTab === tab.key ? "var(--ink)" : "var(--ink-50)",
+                        color: activeTab === tab.key ? "var(--ink)" : "var(--ink-50)",
                         fontWeight: activeTab === tab.key ? 600 : 400,
                         marginBottom: -1,
                       }}
@@ -191,7 +141,6 @@ export default function RegionPanel({
                       {region.food_culture ?? "情報準備中"}
                     </p>
                   )}
-                  {/* 4-3: Drinks list → DrinkCard */}
                   {activeTab === "drinks" && (
                     <ul className="space-y-2">
                       {drinks.length === 0 ? (
@@ -217,105 +166,197 @@ export default function RegionPanel({
 
             {/* ── Drink detail view ── */}
             {selectedDrink && (
-              <div className="px-5 pt-2">
-                {selectedDrink.description ? (
-                  <p className="text-sm leading-relaxed" style={{ color: "var(--ink-70)" }}>
-                    {selectedDrink.description}
-                  </p>
-                ) : (
-                  <p className="text-sm" style={{ color: "var(--ink-35)" }}>
-                    説明情報準備中
-                  </p>
-                )}
+              <>
+                {/* 5-1: Back button + SheetHeader */}
+                <div className="px-5 pt-3 pb-0">
+                  <button
+                    onClick={() => setSelectedDrink(null)}
+                    className="text-xs font-medium flex items-center gap-1"
+                    style={{ color: "var(--amber)" }}
+                  >
+                    ← {region.name}に戻る
+                  </button>
+                </div>
 
-                <button
-                  onClick={() => {
-                    if (!user) { setShowLoginModal(true); }
-                    else { setShowRecordModal(true); }
-                  }}
-                  className="mt-5 w-full rounded-xl py-3 text-sm font-semibold active:opacity-70"
-                  style={{
-                    background: "var(--amber)",
-                    color: "var(--paper)",
-                    borderRadius: "var(--r-lg)",
-                  }}
-                >
-                  飲んだ ✓
-                </button>
+                <SheetHeader
+                  kicker={selectedDrink.genre}
+                  title={selectedDrink.name}
+                  sub={selectedDrink.name_kana ?? undefined}
+                  link="銘柄の詳細を見る"
+                  linkHref={`/drinks/${selectedDrink.id}`}
+                  onClose={onClose}
+                />
 
-                {drinkRecords.length > 0 && (
-                  <div className="mt-5">
-                    <p
-                      className="text-xs font-semibold tracking-wide mb-3 uppercase"
+                {/* 5-2: Hero row */}
+                <div className="px-5 pb-5 flex gap-4">
+                  {/* Thumbnail placeholder */}
+                  <div
+                    className="flex-shrink-0 rounded-lg"
+                    style={{
+                      width: 56,
+                      height: 92,
+                      background:
+                        "repeating-linear-gradient(45deg, var(--canvas), var(--canvas) 4px, var(--paper) 4px, var(--paper) 8px)",
+                    }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    {/* Genre pill */}
+                    <div className="flex flex-wrap gap-1.5 mb-3">
+                      <span
+                        className="text-[11px] px-2 py-0.5 rounded-full"
+                        style={{
+                          background: "var(--amber-tint)",
+                          color: "var(--amber-dk)",
+                        }}
+                      >
+                        {selectedDrink.genre}
+                      </span>
+                    </div>
+                    {/* Description */}
+                    {selectedDrink.description ? (
+                      <p
+                        className="text-sm"
+                        style={{ color: "var(--ink-70)", lineHeight: 1.85 }}
+                      >
+                        {selectedDrink.description}
+                      </p>
+                    ) : (
+                      <p className="text-sm" style={{ color: "var(--ink-35)" }}>
+                        説明情報準備中
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="px-5">
+                  {/* 5-3 / 5-4: CTA */}
+                  {isRecorded ? (
+                    <button
+                      onClick={() => setShowRecordModal(true)}
+                      className="w-full rounded-xl py-3 text-sm font-semibold flex items-center justify-center gap-2"
                       style={{
-                        fontFamily: "var(--font-mono)",
-                        color: "var(--ink-50)",
+                        background: "var(--success)",
+                        color: "white",
+                        borderRadius: "var(--r-lg)",
                       }}
                     >
-                      飲んだ記録
-                    </p>
-                    <ul className="space-y-2">
-                      {drinkRecords.map((rec) => (
-                        <li
-                          key={rec.id}
-                          className="rounded-xl px-4 py-3"
-                          style={{
-                            border: "1px solid var(--ink-08)",
-                            background: "var(--paper-2)",
-                          }}
-                        >
-                          <p
-                            className="text-xs"
+                      <svg width="14" height="11" viewBox="0 0 14 11" fill="none">
+                        <path
+                          d="M1 5.5L4.5 9L13 1"
+                          stroke="white"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      記録済み
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        if (!user) setShowLoginModal(true);
+                        else setShowRecordModal(true);
+                      }}
+                      className="w-full py-3 text-sm font-semibold active:opacity-70"
+                      style={{
+                        background: "var(--amber)",
+                        color: "var(--paper)",
+                        borderRadius: "var(--r-lg)",
+                      }}
+                    >
+                      + 飲んだことを記録する
+                    </button>
+                  )}
+
+                  {/* Drink records */}
+                  {drinkRecords.length > 0 && (
+                    <div className="mt-6">
+                      <p
+                        className="text-[11px] uppercase tracking-widest mb-3"
+                        style={{ fontFamily: "var(--font-mono)", color: "var(--ink-50)" }}
+                      >
+                        飲んだ記録
+                      </p>
+                      <ul className="space-y-2">
+                        {drinkRecords.map((rec) => (
+                          <li
+                            key={rec.id}
+                            className="rounded-xl px-4 py-3"
                             style={{
-                              fontFamily: "var(--font-mono)",
-                              color: "var(--ink-50)",
+                              border: "1px solid var(--ink-08)",
+                              background: "var(--paper-2)",
                             }}
                           >
-                            {new Date(rec.date).toLocaleDateString("ja-JP", {
-                              year: "numeric",
-                              month: "long",
-                              day: "numeric",
-                            })}
-                          </p>
-                          {rec.memo && (
                             <p
-                              className="text-xs mt-1 leading-relaxed"
-                              style={{ color: "var(--ink-70)" }}
+                              className="text-[11px]"
+                              style={{
+                                fontFamily: "var(--font-mono)",
+                                color: "var(--ink-50)",
+                              }}
                             >
-                              {rec.memo}
+                              {new Date(rec.date).toLocaleDateString("ja-JP", {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                              })}
                             </p>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                            {rec.memo && (
+                              <p
+                                className="text-xs mt-1 leading-relaxed"
+                                style={{ color: "var(--ink-70)" }}
+                              >
+                                {rec.memo}
+                              </p>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
 
-                {otherDrinks.length > 0 && (
-                  <div className="mt-6">
-                    <p
-                      className="text-xs font-semibold tracking-wide mb-3 uppercase"
-                      style={{
-                        fontFamily: "var(--font-mono)",
-                        color: "var(--ink-50)",
-                      }}
-                    >
-                      {region.name}のほかのお酒
-                    </p>
-                    <ul className="space-y-2">
-                      {otherDrinks.map((d) => (
-                        <li key={d.id}>
-                          <DrinkCard
-                            drink={d}
-                            recorded={recordedDrinkIds.has(d.id)}
-                            onClick={() => setSelectedDrink(d)}
-                          />
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
+                  {/* 5-5: Store list */}
+                  {stores.length > 0 && (
+                    <div className="mt-6">
+                      <p
+                        className="text-[11px] uppercase tracking-widest mb-3"
+                        style={{ fontFamily: "var(--font-mono)", color: "var(--ink-50)" }}
+                      >
+                        飲める店
+                      </p>
+                      <ul className="space-y-2">
+                        {stores.map((s) => (
+                          <li key={s.id}>
+                            <StoreCard store={s} />
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* 5-6: Other drinks in region */}
+                  {otherDrinks.length > 0 && (
+                    <div className="mt-6">
+                      <p
+                        className="text-[11px] uppercase tracking-widest mb-3"
+                        style={{ fontFamily: "var(--font-mono)", color: "var(--ink-50)" }}
+                      >
+                        {region.name}のほかのお酒
+                      </p>
+                      <ul className="space-y-2">
+                        {otherDrinks.map((d) => (
+                          <li key={d.id}>
+                            <DrinkCard
+                              drink={d}
+                              recorded={recordedDrinkIds.has(d.id)}
+                              onClick={() => setSelectedDrink(d)}
+                            />
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </>
             )}
           </div>
         )}

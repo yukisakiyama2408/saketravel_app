@@ -9,34 +9,76 @@ type Props = {
 export default function LoginModal({ onClose }: Props) {
   return (
     <>
-      <div className="fixed inset-0 z-30 bg-black/40" onClick={onClose} />
-      <div className="fixed inset-0 z-40 flex items-center justify-center p-6 pointer-events-none">
-        <div className="bg-[#F8F3EC] rounded-2xl p-6 w-full max-w-sm pointer-events-auto shadow-2xl">
-          <h2 className="text-lg font-bold text-[#0D1B2A] mb-2">
+      <div
+        className="fixed inset-0 z-30"
+        style={{ background: "rgba(13,27,42,0.55)", backdropFilter: "blur(4px)" }}
+        onClick={onClose}
+      />
+      <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center p-4 pointer-events-none">
+        <div
+          className="w-full max-w-sm pointer-events-auto"
+          style={{
+            background: "var(--washi)",
+            borderRadius: "var(--r-xl)",
+            boxShadow: "var(--sh-sheet)",
+            padding: "32px 24px 28px",
+          }}
+        >
+          {/* Wordmark */}
+          <p
+            className="text-center text-[11px] tracking-widest uppercase mb-6"
+            style={{ fontFamily: "var(--font-mono)", color: "var(--ink-35)" }}
+          >
+            SAKEMAP
+          </p>
+
+          {/* Title */}
+          <h2
+            className="text-center text-[22px] font-bold leading-snug mb-2"
+            style={{ fontFamily: "var(--font-serif)", color: "var(--ink)" }}
+          >
+            記録を残すには
+            <br />
             ログインが必要です
           </h2>
-          <p className="text-sm text-[#0D1B2A]/60 mb-6">
-            飲んだ記録を保存するには、ログインまたは新規登録が必要です。
+
+          {/* Sub */}
+          <p className="text-center text-xs mb-8" style={{ color: "var(--ink-50)" }}>
+            一杯で、世界を旅する。
           </p>
+
           <div className="space-y-3">
             <Link
               href="/auth/login"
-              className="block w-full bg-[#0D1B2A] text-white text-center rounded-lg py-2.5 text-sm font-medium"
+              className="block w-full text-center py-3 text-sm font-semibold"
+              style={{
+                background: "var(--amber)",
+                color: "var(--paper)",
+                borderRadius: "var(--r-lg)",
+              }}
             >
-              ログイン
+              ログインして記録する
             </Link>
+
             <Link
               href="/auth/signup"
-              className="block w-full border border-[#0D1B2A]/20 text-[#0D1B2A] text-center rounded-lg py-2.5 text-sm font-medium bg-white"
+              className="block w-full text-center py-3 text-sm font-medium"
+              style={{
+                border: "1px solid var(--ink-12)",
+                color: "var(--ink)",
+                borderRadius: "var(--r-lg)",
+              }}
             >
-              新規登録
+              新規登録はこちら
             </Link>
           </div>
+
           <button
             onClick={onClose}
-            className="w-full text-center text-sm text-[#0D1B2A]/40 mt-4"
+            className="w-full text-center text-sm mt-5"
+            style={{ color: "var(--ink-35)" }}
           >
-            キャンセル
+            あとで
           </button>
         </div>
       </div>
