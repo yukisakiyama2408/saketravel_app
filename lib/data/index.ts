@@ -193,3 +193,30 @@ export async function insertRecord(
   const { error } = await supabase.from("records").insert(record);
   return { error: error ? new Error(error.message) : null };
 }
+
+export async function updateRecord(
+  id: string,
+  data: Pick<DrinkRecord, "date" | "memo">
+): Promise<{ error: Error | null }> {
+  if (USE_MOCK) {
+    const records = loadMockRecords();
+    const idx = records.findIndex((r) => r.id === id);
+    if (idx !== -1) {
+      records[idx] = { ...records[idx], ...data };
+      localStorage.setItem(RECORDS_KEY, JSON.stringify(records));
+    }
+    return { error: null };
+  }
+  const { error } = await supabase.from("records").update(data).eq("id", id);
+  return { error: error ? new Error(error.message) : null };
+}
+
+export async function deleteRecord(id: string): Promise<{ error: Error | null }> {
+  if (USE_MOCK) {
+    const records = loadMockRecords().filter((r) => r.id !== id);
+    localStorage.setItem(RECORDS_KEY, JSON.stringify(records));
+    return { error: null };
+  }
+  const { error } = await supabase.from("records").delete().eq("id", id);
+  return { error: error ? new Error(error.message) : null };
+}

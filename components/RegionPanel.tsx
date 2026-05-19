@@ -5,6 +5,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { getDrinksByRegion, getRecordsByDrink, getStoresByDrink } from "@/lib/data";
 import LoginModal from "@/components/LoginModal";
 import RecordModal from "@/components/RecordModal";
+import EditRecordModal from "@/components/EditRecordModal";
 import SheetHeader from "@/components/SheetHeader";
 import DrinkCard from "@/components/DrinkCard";
 import StoreCard from "@/components/StoreCard";
@@ -39,6 +40,7 @@ export default function RegionPanel({
   const [stores, setStores] = useState<Store[]>([]);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showRecordModal, setShowRecordModal] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<import("@/types").DrinkRecord | null>(null);
 
   useEffect(() => {
     if (!region) { setSelectedDrink(null); return; }
@@ -68,6 +70,22 @@ export default function RegionPanel({
           drink={selectedDrink}
           onClose={() => setShowRecordModal(false)}
           onSaved={() => {
+            getRecordsByDrink(selectedDrink.id, user!.id).then(setDrinkRecords);
+            onRecordSaved?.();
+          }}
+        />
+      )}
+
+      {editingRecord && selectedDrink && (
+        <EditRecordModal
+          record={editingRecord}
+          drinkName={selectedDrink.name}
+          onClose={() => setEditingRecord(null)}
+          onSave={() => {
+            getRecordsByDrink(selectedDrink.id, user!.id).then(setDrinkRecords);
+            onRecordSaved?.();
+          }}
+          onDelete={() => {
             getRecordsByDrink(selectedDrink.id, user!.id).then(setDrinkRecords);
             onRecordSaved?.();
           }}
@@ -279,35 +297,59 @@ export default function RegionPanel({
                       </p>
                       <ul className="space-y-2">
                         {drinkRecords.map((rec) => (
-                          <li
-                            key={rec.id}
-                            className="rounded-xl px-4 py-3"
-                            style={{
-                              border: "1px solid var(--ink-08)",
-                              background: "var(--paper-2)",
-                            }}
-                          >
-                            <p
-                              className="text-[11px]"
+                          <li key={rec.id}>
+                            <button
+                              onClick={() => setEditingRecord(rec)}
+                              className="w-full text-left rounded-xl px-4 py-3 transition-colors"
                               style={{
-                                fontFamily: "var(--font-mono)",
-                                color: "var(--ink-50)",
+                                border: "1px solid var(--ink-08)",
+                                background: "var(--paper-2)",
                               }}
+                              onMouseEnter={(e) =>
+                                (e.currentTarget.style.background = "var(--washi)")
+                              }
+                              onMouseLeave={(e) =>
+                                (e.currentTarget.style.background = "var(--paper-2)")
+                              }
                             >
-                              {new Date(rec.date).toLocaleDateString("ja-JP", {
-                                year: "numeric",
-                                month: "long",
-                                day: "numeric",
-                              })}
-                            </p>
-                            {rec.memo && (
-                              <p
-                                className="text-xs mt-1 leading-relaxed"
-                                style={{ color: "var(--ink-70)" }}
-                              >
-                                {rec.memo}
-                              </p>
-                            )}
+                              <div className="flex items-center justify-between gap-2">
+                                <p
+                                  className="text-[11px]"
+                                  style={{
+                                    fontFamily: "var(--font-mono)",
+                                    color: "var(--ink-50)",
+                                  }}
+                                >
+                                  {new Date(rec.date).toLocaleDateString("ja-JP", {
+                                    year: "numeric",
+                                    month: "long",
+                                    day: "numeric",
+                                  })}
+                                </p>
+                                <svg
+                                  width="12"
+                                  height="12"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  style={{ color: "var(--ink-35)", flexShrink: 0 }}
+                                >
+                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                </svg>
+                              </div>
+                              {rec.memo && (
+                                <p
+                                  className="text-xs mt-1 leading-relaxed"
+                                  style={{ color: "var(--ink-70)" }}
+                                >
+                                  {rec.memo}
+                                </p>
+                              )}
+                            </button>
                           </li>
                         ))}
                       </ul>
