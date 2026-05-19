@@ -150,6 +150,37 @@ const prefectureBorderLayer: LayerSpecification = {
   },
 };
 
+const worldRegionFillLayer: LayerSpecification = {
+  id: "world-region-fill",
+  type: "fill",
+  source: "world-drinks",
+  paint: {
+    "fill-color": "#C8893D",
+    "fill-opacity": [
+      "interpolate", ["linear"], ["zoom"],
+      2, 0.22,
+      ZOOM_THRESHOLD, 0.08,
+      12, 0.05,
+    ],
+  },
+};
+
+const worldRegionBorderLayer: LayerSpecification = {
+  id: "world-region-border",
+  type: "line",
+  source: "world-drinks",
+  paint: {
+    "line-color": "#C8893D",
+    "line-width": [
+      "interpolate", ["linear"], ["zoom"],
+      2, 1,
+      ZOOM_THRESHOLD, 1.8,
+      10, 2.2,
+    ],
+    "line-opacity": 0.65,
+  },
+};
+
 type Props = {
   regions: Region[];
   focusRegion?: Region | null;
@@ -163,6 +194,7 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
   const [lang, setLang] = useState<Lang>("ja");
   const [userRecords, setUserRecords] = useState<RecordWithJoin[]>([]);
   const [prefectureBase, setPrefectureBase] = useState<GeoJSON.FeatureCollection | null>(null);
+  const [worldAdmin1Base, setWorldAdmin1Base] = useState<GeoJSON.FeatureCollection | null>(null);
   const [zoom, setZoom] = useState(2);
   const [activeGenres, setActiveGenres] = useState<Set<Genre>>(
     new Set(["sake", "wine", "beer"])
@@ -173,6 +205,13 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
     fetch("https://raw.githubusercontent.com/dataofjapan/land/master/japan.geojson")
       .then((r) => r.json())
       .then((data: GeoJSON.FeatureCollection) => setPrefectureBase(data))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetch("/world-admin1.geojson")
+      .then((r) => r.json())
+      .then((data: GeoJSON.FeatureCollection) => setWorldAdmin1Base(data))
       .catch(() => {});
   }, []);
 
@@ -258,6 +297,24 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
     return { type: "FeatureCollection", features };
   }, [prefectureBase, filteredRegions]);
 
+  const worldDrinksGeojson = useMemo<GeoJSON.FeatureCollection>(() => {
+    if (!worldAdmin1Base) return { type: "FeatureCollection", features: [] };
+    const nonJapanRegions = filteredRegions.filter((r) => r.country !== "日本");
+    if (nonJapanRegions.length === 0) return { type: "FeatureCollection", features: [] };
+
+    const features: GeoJSON.Feature[] = [];
+    for (const f of worldAdmin1Base.features) {
+      const match = nonJapanRegions.find((r) => regionInFeature(r, f));
+      if (match) {
+        features.push({
+          ...f,
+          properties: { ...(f.properties ?? {}), region_id: match.id },
+        });
+      }
+    }
+    return { type: "FeatureCollection", features };
+  }, [worldAdmin1Base, filteredRegions]);
+
   const countryGroups = useMemo(() => {
     const byCountry: Record<string, Region[]> = {};
     for (const r of filteredRegions) {
@@ -301,10 +358,20 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
       return;
     }
 
-    // 都道府県エリアクリック
+    // 都道府県エリアクリック（日本）
     const prefFeatures = map.queryRenderedFeatures(e.point, { layers: ["prefecture-fill"] });
     if (prefFeatures.length > 0) {
       const regionId = prefFeatures[0].properties?.region_id as string | undefined;
+      if (regionId) {
+        const region = filteredRegions.find((r) => r.id === regionId);
+        if (region) { setSelectedRegion(region); return; }
+      }
+    }
+
+    // 海外エリアクリック
+    const worldFeatures = map.queryRenderedFeatures(e.point, { layers: ["world-region-fill"] });
+    if (worldFeatures.length > 0) {
+      const regionId = worldFeatures[0].properties?.region_id as string | undefined;
       if (regionId) {
         const region = filteredRegions.find((r) => r.id === regionId);
         if (region) setSelectedRegion(region);
@@ -346,7 +413,7 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
         mapStyle="mapbox://styles/mapbox/light-v11"
         projection="mercator"
         onClick={handleMapClick}
-        interactiveLayerIds={["prefecture-fill", "clusters"]}
+        interactiveLayerIds={["prefecture-fill", "world-region-fill", "clusters"]}
         cursor="auto"
         onLoad={(e) => applyMapLanguage(e.target, lang)}
         onZoom={(e) => setZoom((e as unknown as { viewState: { zoom: number } }).viewState.zoom)}
@@ -354,6 +421,11 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
         <Source id="prefecture-drinks" type="geojson" data={prefectureDrinksGeojson}>
           <Layer {...prefectureFillLayer} />
           <Layer {...prefectureBorderLayer} />
+        </Source>
+
+        <Source id="world-drinks" type="geojson" data={worldDrinksGeojson}>
+          <Layer {...worldRegionFillLayer} />
+          <Layer {...worldRegionBorderLayer} />
         </Source>
 
         <Source
@@ -391,7 +463,20 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
         {/* Country pins (zoom < 3) */}
         {zoom < 3 &&
           Object.entries(countryGroups).map(([country, data]) => (
-            <Marker key={country} longitude={data.lng} latitude={data.lat}>
+            <Marker
+              key={country}
+              longitude={data.lng}
+              latitude={data.lat}
+              onClick={(e) => {
+                e.originalEvent.stopPropagation();
+                mapRef.current?.getMap()?.flyTo({
+                  center: [data.lng, data.lat],
+                  zoom: 5,
+                  duration: 1500,
+                });
+              }}
+              style={{ cursor: "pointer" }}
+            >
               <CountryPin
                 flag={COUNTRY_FLAGS[country] ?? "🌍"}
                 country={country}
