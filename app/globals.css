@@ -77,3 +77,8 @@ body {
   font-family: var(--font-sans), "Hiragino Sans", sans-serif;
   -webkit-font-smoothing: antialiased;
 }
+
+@keyframes sakemap-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.22; }
+  50% { transform: scale(1.15); opacity: 0.12; }
+}
