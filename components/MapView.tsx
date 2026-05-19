@@ -120,8 +120,9 @@ const prefectureFillLayer: LayerSpecification = {
     "fill-color": "#C8893D",
     "fill-opacity": [
       "interpolate", ["linear"], ["zoom"],
-      ZOOM_THRESHOLD - 1, 0.35,
-      ZOOM_THRESHOLD, 0,
+      2, 0.22,
+      ZOOM_THRESHOLD, 0.08,
+      12, 0.05,
     ],
   },
 };
@@ -132,12 +133,13 @@ const prefectureBorderLayer: LayerSpecification = {
   source: "prefecture-drinks",
   paint: {
     "line-color": "#C8893D",
-    "line-width": 1.5,
-    "line-opacity": [
+    "line-width": [
       "interpolate", ["linear"], ["zoom"],
-      ZOOM_THRESHOLD - 1, 0.8,
-      ZOOM_THRESHOLD, 0,
+      2, 1,
+      ZOOM_THRESHOLD, 1.8,
+      10, 2.2,
     ],
+    "line-opacity": 0.65,
   },
 };
 
@@ -236,12 +238,17 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
 
   const prefectureDrinksGeojson = useMemo<GeoJSON.FeatureCollection>(() => {
     if (!prefectureBase) return { type: "FeatureCollection", features: [] };
-    return {
-      type: "FeatureCollection",
-      features: prefectureBase.features.filter((f) =>
-        filteredRegions.some((r) => regionInFeature(r, f))
-      ),
-    };
+    const features: GeoJSON.Feature[] = [];
+    for (const f of prefectureBase.features) {
+      const match = filteredRegions.find((r) => regionInFeature(r, f));
+      if (match) {
+        features.push({
+          ...f,
+          properties: { ...(f.properties ?? {}), region_id: match.id },
+        });
+      }
+    }
+    return { type: "FeatureCollection", features };
   }, [prefectureBase, filteredRegions]);
 
   const countryGroups = useMemo(() => {
@@ -273,6 +280,8 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
   const handleMapClick = useCallback(async (e: MapMouseEvent) => {
     const map = mapRef.current?.getMap();
     if (!map) return;
+
+    // クラスタークリック
     const clusterFeatures = map.queryRenderedFeatures(e.point, { layers: ["clusters"] });
     if (clusterFeatures.length > 0) {
       const clusterId = clusterFeatures[0].properties?.cluster_id;
@@ -282,8 +291,19 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
       const zoomLevel = await source.getClusterExpansionZoom(clusterId);
       const coords = (clusterFeatures[0].geometry as GeoJSON.Point).coordinates;
       map.easeTo({ center: [coords[0], coords[1]], zoom: zoomLevel });
+      return;
     }
-  }, []);
+
+    // 都道府県エリアクリック
+    const prefFeatures = map.queryRenderedFeatures(e.point, { layers: ["prefecture-fill"] });
+    if (prefFeatures.length > 0) {
+      const regionId = prefFeatures[0].properties?.region_id as string | undefined;
+      if (regionId) {
+        const region = filteredRegions.find((r) => r.id === regionId);
+        if (region) setSelectedRegion(region);
+      }
+    }
+  }, [filteredRegions]);
 
   return (
     <div className="relative w-full h-full">
@@ -319,6 +339,7 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
         mapStyle="mapbox://styles/mapbox/light-v11"
         projection="mercator"
         onClick={handleMapClick}
+        interactiveLayerIds={["prefecture-fill", "clusters"]}
         cursor="auto"
         onLoad={(e) => applyMapLanguage(e.target, lang)}
         onZoom={(e) => setZoom((e as unknown as { viewState: { zoom: number } }).viewState.zoom)}
