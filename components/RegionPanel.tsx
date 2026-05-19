@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import {
   getDrinksByRegion,
+  getDishesByRegion,
   getRecordsByDrink,
   getStoresByDrink,
 } from "@/lib/data";
@@ -17,6 +18,7 @@ import type {
   Region,
   Drink,
   DrinkRecord,
+  Dish,
   Store,
   RecordWithJoin,
 } from "@/types";
@@ -45,6 +47,7 @@ export default function RegionPanel({
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>("climate");
   const [drinks, setDrinks] = useState<Drink[]>([]);
+  const [dishes, setDishes] = useState<Dish[]>([]);
   const [selectedDrink, setSelectedDrink] = useState<Drink | null>(null);
   const [drinkRecords, setDrinkRecords] = useState<DrinkRecord[]>([]);
   const [stores, setStores] = useState<Store[]>([]);
@@ -57,11 +60,13 @@ export default function RegionPanel({
   useEffect(() => {
     if (!region) {
       setSelectedDrink(null);
+      setDishes([]);
       return;
     }
     setActiveTab("climate");
     setSelectedDrink(null);
     getDrinksByRegion(region.id).then(setDrinks);
+    getDishesByRegion(region.id).then(setDishes);
   }, [region]);
 
   useEffect(() => {
@@ -196,9 +201,60 @@ export default function RegionPanel({
                       </p>
                     )}
                     {activeTab === "food" && (
-                      <p className="text-sm" style={{ color: "var(--ink-70)" }}>
-                        {region.food_culture ?? "情報準備中"}
-                      </p>
+                      <div>
+                        <p className="text-sm leading-relaxed" style={{ color: "var(--ink-70)" }}>
+                          {region.food_culture ?? "情報準備中"}
+                        </p>
+
+                        {dishes.length > 0 && (
+                          <div className="mt-5">
+                            <p
+                              className="text-[11px] uppercase tracking-widest mb-3"
+                              style={{ fontFamily: "var(--font-mono)", color: "var(--ink-50)" }}
+                            >
+                              名物 ─ Specialties
+                            </p>
+                            <div
+                              className="flex gap-3 overflow-x-auto pb-1 -mx-5 px-5"
+                              style={{ scrollbarWidth: "none" }}
+                            >
+                              {dishes.map((dish) => (
+                                <div key={dish.id} className="flex-shrink-0" style={{ width: 90 }}>
+                                  {/* Photo placeholder */}
+                                  <div
+                                    className="rounded-lg"
+                                    style={{
+                                      width: 90,
+                                      height: 70,
+                                      background: "repeating-linear-gradient(45deg, var(--canvas), var(--canvas) 4px, var(--paper) 4px, var(--paper) 8px)",
+                                    }}
+                                  />
+                                  <p
+                                    className="text-xs font-bold mt-1.5 leading-tight"
+                                    style={{ fontFamily: "var(--font-serif)", color: "var(--ink)" }}
+                                  >
+                                    {dish.name}
+                                  </p>
+                                  {dish.description && (
+                                    <p
+                                      className="text-[10px] mt-0.5 leading-tight"
+                                      style={{
+                                        color: "var(--ink-50)",
+                                        display: "-webkit-box",
+                                        WebkitLineClamp: 2,
+                                        WebkitBoxOrient: "vertical" as const,
+                                        overflow: "hidden",
+                                      }}
+                                    >
+                                      {dish.description}
+                                    </p>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     )}
                     {activeTab === "drinks" && (
                       <ul className="space-y-2">

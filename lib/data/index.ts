@@ -145,6 +145,12 @@ export async function getDishById(id: string): Promise<Dish | null> {
   return data ?? null;
 }
 
+export async function getDishesByRegion(regionId: string): Promise<Dish[]> {
+  if (USE_MOCK) return mockDishes.filter((d) => d.region_id === regionId);
+  const { data } = await supabase.from("dishes").select("*").eq("region_id", regionId);
+  return data ?? [];
+}
+
 // ── Record ────────────────────────────────────────────────────────────────
 
 export async function getRecordsByUser(userId: string): Promise<RecordWithJoin[]> {
