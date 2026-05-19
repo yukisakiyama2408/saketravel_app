@@ -9,6 +9,7 @@ import LoginModal from "@/components/LoginModal";
 import RecordModal from "@/components/RecordModal";
 import EditRecordModal from "@/components/EditRecordModal";
 import type { Drink, DrinkRecord, Region, Store } from "@/types";
+import { DRINK_SPECS } from "@/lib/data/mock/drink_specs";
 
 type Props = {
   drink: Drink & { region: Region };
@@ -120,6 +121,45 @@ export default function DrinkPageClient({ drink, stores }: Props) {
             </span>
           </div>
         </div>
+
+        {/* ── Spec strip ── */}
+        {(() => {
+          const spec = DRINK_SPECS[drink.id];
+          if (!spec) return null;
+          const nihonshu_do = spec.nihonshu_do != null
+            ? (spec.nihonshu_do >= 0 ? `+${spec.nihonshu_do}` : `${spec.nihonshu_do}`)
+            : "─";
+          const items = [
+            { label: "日本酒度", value: nihonshu_do },
+            { label: "精米歩合", value: spec.seimaibuai != null ? `${spec.seimaibuai}%` : "─" },
+            { label: "アルコール", value: spec.alcohol != null ? `${spec.alcohol}%` : "─" },
+            { label: "酒米", value: spec.shuzou_mai ?? "─" },
+          ];
+          return (
+            <div
+              className="grid grid-cols-4"
+              style={{ background: "var(--paper)", borderBottom: "1px solid var(--ink-08)" }}
+            >
+              {items.map((item, i) => (
+                <div
+                  key={item.label}
+                  className="py-3 text-center"
+                  style={{ borderRight: i < 3 ? "1px solid var(--ink-08)" : undefined }}
+                >
+                  <p
+                    className="text-[17px] font-bold leading-none"
+                    style={{ fontFamily: "var(--font-mono)", color: "var(--ink)" }}
+                  >
+                    {item.value}
+                  </p>
+                  <p className="text-[10px] mt-1" style={{ color: "var(--ink-35)" }}>
+                    {item.label}
+                  </p>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
 
         {/* ── Drink info ── */}
         <div

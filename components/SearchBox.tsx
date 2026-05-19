@@ -34,6 +34,7 @@ export default function SearchBox({ onSelectRegion, recordedDrinkIds }: Props) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<DrinkSearchResult[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -117,20 +118,20 @@ export default function SearchBox({ onSelectRegion, recordedDrinkIds }: Props) {
 
           <ul>
             {results.length > 0 ? (
-              results.map((r) => {
+              results.map((r, i) => {
                 const recorded = recordedDrinkIds?.has(r.id) ?? false;
                 return (
                   <li key={r.id}>
                     <button
                       onClick={() => handleSelect(r)}
                       className="w-full text-left px-4 py-3 transition-colors"
-                      style={{ borderBottom: "1px solid var(--ink-04)" }}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.background = "var(--washi)")
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.background = "")
-                      }
+                      style={{
+                        borderBottom: "1px solid var(--ink-04)",
+                        borderLeft: `3px solid ${activeIndex === i ? "var(--amber)" : "transparent"}`,
+                        background: activeIndex === i ? "var(--amber-tint)" : "",
+                      }}
+                      onMouseEnter={() => setActiveIndex(i)}
+                      onMouseLeave={() => setActiveIndex(-1)}
                     >
                       <div className="flex items-center justify-between gap-2">
                         <p className="text-sm font-medium" style={{ color: "var(--ink)" }}>

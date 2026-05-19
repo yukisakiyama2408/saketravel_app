@@ -16,6 +16,13 @@ import GenreChips from "./GenreChips";
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!;
 const ZOOM_THRESHOLD = 6;
 
+function getZoomScope(zoom: number): string {
+  if (zoom < 3) return "WORLD";
+  if (zoom < 6) return "ASIA";
+  if (zoom < 9) return "REGION";
+  return "LOCAL";
+}
+
 type Genre = "sake" | "wine" | "beer";
 
 const COUNTRY_FLAGS: Record<string, string> = {
@@ -403,6 +410,53 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
           getRecordsByUser(user.id).then(setUserRecords);
         }}
       />
+
+      {/* Scope badge */}
+      <div className="absolute z-20 left-4" style={{ bottom: 52 }}>
+        <span
+          className="text-[10px] px-2 py-1 rounded"
+          style={{
+            fontFamily: "var(--font-mono)",
+            background: "rgba(13,27,42,0.55)",
+            color: "rgba(255,255,255,0.7)",
+          }}
+        >
+          {getZoomScope(zoom)}
+        </span>
+      </div>
+
+      {/* Stat pill */}
+      <div className="absolute z-20 left-4 bottom-4 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs"
+        style={{ background: "var(--amber-tint)", border: "1px solid var(--amber)" }}
+      >
+        <span style={{ fontFamily: "var(--font-mono)", color: "var(--amber-dk)", fontWeight: 600 }}>
+          {recordedRegionIds.size} / {regions.length}
+        </span>
+        <span style={{ color: "var(--ink-50)" }}>地域訪問</span>
+      </div>
+
+      {/* Zoom controls */}
+      <div
+        className="absolute z-20 right-4 flex flex-col rounded-xl overflow-hidden shadow-md"
+        style={{ bottom: 56, border: "1px solid var(--ink-12)" }}
+      >
+        <button
+          onClick={() => mapRef.current?.getMap()?.zoomIn()}
+          className="flex items-center justify-center text-base font-medium"
+          style={{ width: 36, height: 32, background: "var(--paper)", color: "var(--ink)" }}
+          aria-label="ズームイン"
+        >
+          ＋
+        </button>
+        <button
+          onClick={() => mapRef.current?.getMap()?.zoomOut()}
+          className="flex items-center justify-center text-base font-medium"
+          style={{ width: 36, height: 32, background: "var(--paper)", color: "var(--ink)", borderTop: "1px solid var(--ink-08)" }}
+          aria-label="ズームアウト"
+        >
+          －
+        </button>
+      </div>
 
       {/* Language toggle */}
       <div className="absolute bottom-4 right-4 flex rounded-full overflow-hidden border shadow-md text-xs font-medium" style={{ borderColor: "var(--ink-20)" }}>

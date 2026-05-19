@@ -1,4 +1,5 @@
 import type { Drink } from "@/types";
+import { DRINK_SPECS } from "@/lib/data/mock/drink_specs";
 
 type Props = {
   drink: Drink;
@@ -7,6 +8,16 @@ type Props = {
 };
 
 export default function DrinkCard({ drink, recorded = false, onClick }: Props) {
+  const spec = DRINK_SPECS[drink.id];
+  const specLine = spec
+    ? [
+        spec.seimaibuai != null ? `精米 ${spec.seimaibuai}%` : null,
+        spec.alcohol != null ? `ALC ${spec.alcohol}%` : null,
+      ]
+        .filter(Boolean)
+        .join(" · ")
+    : null;
+
   return (
     <button
       onClick={onClick}
@@ -48,6 +59,14 @@ export default function DrinkCard({ drink, recorded = false, onClick }: Props) {
         <p className="text-[11px] mt-0.5 truncate" style={{ color: "var(--ink-50)" }}>
           {drink.genre}
         </p>
+        {specLine && (
+          <p
+            className="text-[10px] mt-0.5 truncate"
+            style={{ fontFamily: "var(--font-mono)", color: "var(--ink-35)" }}
+          >
+            {specLine}
+          </p>
+        )}
       </div>
 
       {/* Recorded badge + chevron */}

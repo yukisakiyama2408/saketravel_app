@@ -8,6 +8,8 @@ import {
   getRecordsByDrink,
   getStoresByDrink,
 } from "@/lib/data";
+import { REGION_STATS } from "@/lib/data/mock/region_stats";
+import { DRINK_SPECS } from "@/lib/data/mock/drink_specs";
 import LoginModal from "@/components/LoginModal";
 import RecordModal from "@/components/RecordModal";
 import EditRecordModal from "@/components/EditRecordModal";
@@ -195,13 +197,65 @@ export default function RegionPanel({
                   </div>
 
                   <div className="px-5 pt-4 leading-relaxed">
-                    {activeTab === "climate" && (
-                      <p className="text-sm" style={{ color: "var(--ink-70)" }}>
-                        {region.climate ?? "情報準備中"}
-                      </p>
-                    )}
+                    {activeTab === "climate" && (() => {
+                      const stats = REGION_STATS[region.id];
+                      return (
+                        <div>
+                          {/* Photo placeholder */}
+                          <div
+                            className="rounded-xl mb-4 flex items-center justify-center"
+                            style={{ height: 110, background: "var(--ink-04)" }}
+                          >
+                            <p
+                              className="text-[11px]"
+                              style={{ fontFamily: "var(--font-mono)", color: "var(--ink-20)" }}
+                            >
+                              📷 PHOTO COMING SOON
+                            </p>
+                          </div>
+
+                          {/* Stats grid */}
+                          {stats && (
+                            <div className="grid grid-cols-2 gap-2 mb-4">
+                              {[
+                                { label: "年間降雪量", value: stats.annual_snowfall ?? "─" },
+                                { label: "年間平均気温", value: stats.avg_temperature ?? "─" },
+                                { label: "酒蔵数", value: stats.sake_breweries != null ? `${stats.sake_breweries} 蔵` : "─" },
+                                { label: "代表的酒米", value: stats.rice_variety ?? "─" },
+                              ].map(({ label, value }) => (
+                                <div
+                                  key={label}
+                                  className="rounded-lg px-3 py-2.5"
+                                  style={{ background: "var(--ink-04)" }}
+                                >
+                                  <p className="text-[10px] mb-0.5" style={{ color: "var(--ink-35)" }}>{label}</p>
+                                  <p className="text-sm font-bold" style={{ fontFamily: "var(--font-mono)", color: "var(--ink)" }}>{value}</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          <p className="text-sm" style={{ color: "var(--ink-70)" }}>
+                            {region.climate ?? "情報準備中"}
+                          </p>
+                        </div>
+                      );
+                    })()}
                     {activeTab === "food" && (
                       <div>
+                        {/* Photo placeholder */}
+                        <div
+                          className="rounded-xl mb-4 flex items-center justify-center"
+                          style={{ height: 110, background: "var(--ink-04)" }}
+                        >
+                          <p
+                            className="text-[11px]"
+                            style={{ fontFamily: "var(--font-mono)", color: "var(--ink-20)" }}
+                          >
+                            📷 PHOTO COMING SOON
+                          </p>
+                        </div>
+
                         <p className="text-sm leading-relaxed" style={{ color: "var(--ink-70)" }}>
                           {region.food_culture ?? "情報準備中"}
                         </p>
@@ -319,7 +373,7 @@ export default function RegionPanel({
                     />
                     <div className="flex-1 min-w-0">
                       {/* Genre pill */}
-                      <div className="flex flex-wrap gap-1.5 mb-3">
+                      <div className="flex flex-wrap gap-1.5 mb-2">
                         <span
                           className="text-[11px] px-2 py-0.5 rounded-full"
                           style={{
@@ -330,6 +384,24 @@ export default function RegionPanel({
                           {selectedDrink.genre}
                         </span>
                       </div>
+                      {/* Spec row */}
+                      {(() => {
+                        const spec = DRINK_SPECS[selectedDrink.id];
+                        const parts = spec
+                          ? [
+                              spec.seimaibuai != null ? `精米 ${spec.seimaibuai}%` : null,
+                              spec.alcohol != null ? `ALC ${spec.alcohol}%` : null,
+                            ].filter(Boolean)
+                          : [];
+                        return parts.length > 0 ? (
+                          <p
+                            className="text-[11px] mb-2"
+                            style={{ fontFamily: "var(--font-mono)", color: "var(--ink-35)" }}
+                          >
+                            {parts.join(" · ")}
+                          </p>
+                        ) : null;
+                      })()}
                       {/* Description */}
                       {selectedDrink.description ? (
                         <p

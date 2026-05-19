@@ -7,6 +7,7 @@ import { getRecordsByUser } from "@/lib/data";
 import DrinkCard from "@/components/DrinkCard";
 import StoreCard from "@/components/StoreCard";
 import type { Region, Drink, Store } from "@/types";
+import { REGION_STATS } from "@/lib/data/mock/region_stats";
 
 type Tab = "climate" | "food" | "drinks";
 
@@ -176,14 +177,43 @@ export default function RegionDetailClient({ region, drinks, stores }: Props) {
 
       {/* ── Tab content ── */}
       <div className="px-5 pt-5 pb-24">
-        {activeTab === "climate" && (
-          <p
-            className="text-sm leading-relaxed"
-            style={{ color: "var(--ink-70)" }}
-          >
-            {region.climate ?? "情報準備中"}
-          </p>
-        )}
+        {activeTab === "climate" && (() => {
+          const stats = REGION_STATS[region.id];
+          return (
+            <div>
+              {stats && (
+                <div className="grid grid-cols-2 gap-2 mb-5">
+                  {[
+                    { label: "年間降雪量", value: stats.annual_snowfall ?? "─" },
+                    { label: "年間平均気温", value: stats.avg_temperature ?? "─" },
+                    { label: "酒蔵数", value: stats.sake_breweries != null ? `${stats.sake_breweries} 蔵` : "─" },
+                    { label: "水の硬度", value: stats.water_hardness ?? "─" },
+                  ].map(({ label, value }) => (
+                    <div
+                      key={label}
+                      className="rounded-xl px-4 py-3"
+                      style={{
+                        background: "var(--paper-2)",
+                        border: "1px solid var(--ink-08)",
+                      }}
+                    >
+                      <p className="text-[10px] mb-1" style={{ color: "var(--ink-35)" }}>{label}</p>
+                      <p
+                        className="text-sm font-bold"
+                        style={{ fontFamily: "var(--font-mono)", color: "var(--ink)" }}
+                      >
+                        {value}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <p className="text-sm leading-relaxed" style={{ color: "var(--ink-70)" }}>
+                {region.climate ?? "情報準備中"}
+              </p>
+            </div>
+          );
+        })()}
 
         {activeTab === "food" && (
           <p
