@@ -15,6 +15,7 @@ export type Drink = {
   name: string;
   name_kana: string | null;
   genre: string;
+  genre_category: "sake" | "wine" | "beer" | null;
   region_id: string;
   description: string | null;
   created_at: string;
