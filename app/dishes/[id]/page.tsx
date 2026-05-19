@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { supabase } from "@/lib/supabase";
-import type { Store } from "@/types";
+import { getDishById, getDrinksByIds, getStoresByRegion } from "@/lib/data";
 
 export default async function DishDetailPage({
   params,
@@ -10,23 +9,15 @@ export default async function DishDetailPage({
 }) {
   const { id } = await params;
 
-  const { data: dish } = await supabase
-    .from("dishes")
-    .select("*")
-    .eq("id", id)
-    .single();
+  const dish = await getDishById(id);
 
   if (!dish) notFound();
 
   const pairingDrinkIds: string[] = dish.pairing_drink_ids ?? [];
 
-  const [{ data: pairingDrinks }, { data: stores }] = await Promise.all([
-    pairingDrinkIds.length > 0
-      ? supabase.from("drinks").select("*").in("id", pairingDrinkIds)
-      : Promise.resolve({ data: [] }),
-    dish.region_id
-      ? supabase.from("stores").select("*").contains("region_ids", [dish.region_id])
-      : Promise.resolve({ data: [] }),
+  const [pairingDrinks, stores] = await Promise.all([
+    getDrinksByIds(pairingDrinkIds),
+    dish.region_id ? getStoresByRegion(dish.region_id) : Promise.resolve([]),
   ]);
 
   return (
@@ -68,7 +59,7 @@ export default async function DishDetailPage({
           <section className="mt-8">
             <h2 className="text-xs font-semibold text-[#0D1B2A]/50 tracking-wide mb-3">食べられる店</h2>
             <ul className="space-y-2">
-              {(stores as Store[]).map((s) => (
+              {stores.map((s) => (
                 <li key={s.id} className="border border-[#0D1B2A]/10 rounded-xl px-4 py-3 bg-white">
                   <p className="font-medium text-[#0D1B2A] text-sm">{s.name}</p>
                   {s.genre && <p className="text-xs text-[#0D1B2A]/50 mt-0.5">{s.genre}</p>}

@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { supabase } from "@/lib/supabase";
-import type { Store } from "@/types";
+import { getRegionById, getDrinksByRegion, getStoresByRegion } from "@/lib/data";
 
 export default async function RegionDetailPage({
   params,
@@ -10,10 +9,10 @@ export default async function RegionDetailPage({
 }) {
   const { id } = await params;
 
-  const [{ data: region }, { data: drinks }, { data: stores }] = await Promise.all([
-    supabase.from("regions").select("*").eq("id", id).single(),
-    supabase.from("drinks").select("*").eq("region_id", id).order("name"),
-    supabase.from("stores").select("*").contains("region_ids", [id]),
+  const [region, drinks, stores] = await Promise.all([
+    getRegionById(id),
+    getDrinksByRegion(id),
+    getStoresByRegion(id),
   ]);
 
   if (!region) notFound();
@@ -73,7 +72,7 @@ export default async function RegionDetailPage({
           <section className="mt-8">
             <h2 className="text-xs font-semibold text-[#0D1B2A]/50 tracking-wide mb-3">国内で楽しめる店</h2>
             <ul className="space-y-2">
-              {(stores as Store[]).map((s) => (
+              {stores.map((s) => (
                 <li key={s.id} className="border border-[#0D1B2A]/10 rounded-xl px-4 py-3 bg-white">
                   <p className="font-medium text-[#0D1B2A] text-sm">{s.name}</p>
                   {s.genre && <p className="text-xs text-[#0D1B2A]/50 mt-0.5">{s.genre}</p>}

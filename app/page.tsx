@@ -1,8 +1,7 @@
-import { supabase } from "@/lib/supabase";
+import { getRegions } from "@/lib/data";
 import AppShell from "@/components/AppShell";
 
 export default async function Home() {
-  const { data: regions } = await supabase.from("regions").select("*");
-
-  return <AppShell regions={regions ?? []} />;
+  const regions = await getRegions();
+  return <AppShell regions={regions} />;
 }

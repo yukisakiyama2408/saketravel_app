@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/components/AuthProvider";
+import { getDrinksByRegion, getRecordsByDrink } from "@/lib/data";
 import LoginModal from "@/components/LoginModal";
 import RecordModal from "@/components/RecordModal";
 import type { Region, Drink, DrinkRecord, RecordWithJoin } from "@/types";
@@ -33,11 +33,7 @@ export default function RegionPanel({ region, regionRecords = [], onClose, onRec
     }
     setActiveTab("climate");
     setSelectedDrink(null);
-    supabase
-      .from("drinks")
-      .select("*")
-      .eq("region_id", region.id)
-      .then(({ data }) => setDrinks(data ?? []));
+    getDrinksByRegion(region.id).then(setDrinks);
   }, [region]);
 
   useEffect(() => {
@@ -45,13 +41,7 @@ export default function RegionPanel({ region, regionRecords = [], onClose, onRec
       setDrinkRecords([]);
       return;
     }
-    supabase
-      .from("records")
-      .select("*")
-      .eq("drink_id", selectedDrink.id)
-      .eq("user_id", user.id)
-      .order("date", { ascending: false })
-      .then(({ data }) => setDrinkRecords(data ?? []));
+    getRecordsByDrink(selectedDrink.id, user.id).then(setDrinkRecords);
   }, [selectedDrink, user]);
 
   const visible = region !== null;
@@ -69,13 +59,7 @@ export default function RegionPanel({ region, regionRecords = [], onClose, onRec
           drink={selectedDrink}
           onClose={() => setShowRecordModal(false)}
           onSaved={() => {
-            supabase
-              .from("records")
-              .select("*")
-              .eq("drink_id", selectedDrink.id)
-              .eq("user_id", user!.id)
-              .order("date", { ascending: false })
-              .then(({ data }) => setDrinkRecords(data ?? []));
+            getRecordsByDrink(selectedDrink.id, user!.id).then(setDrinkRecords);
             onRecordSaved?.();
           }}
         />

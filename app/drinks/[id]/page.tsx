@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { supabase } from "@/lib/supabase";
-import type { Store } from "@/types";
+import { getDrinkById, getStoresByDrink } from "@/lib/data";
 
 export default async function DrinkDetailPage({
   params,
@@ -10,20 +9,13 @@ export default async function DrinkDetailPage({
 }) {
   const { id } = await params;
 
-  const { data: drink } = await supabase
-    .from("drinks")
-    .select("*, region:regions(*)")
-    .eq("id", id)
-    .single();
+  const drink = await getDrinkById(id);
 
   if (!drink) notFound();
 
-  const { data: stores } = await supabase
-    .from("stores")
-    .select("*")
-    .contains("drink_ids", [id]);
+  const stores = await getStoresByDrink(id);
 
-  const region = drink.region as { id: string; name: string; country: string; climate: string | null; food_culture: string | null } | null;
+  const region = drink.region;
 
   return (
     <div className="h-full overflow-y-auto bg-[#F8F3EC]">
@@ -70,7 +62,7 @@ export default async function DrinkDetailPage({
           <section className="mt-8">
             <h2 className="text-xs font-semibold text-[#0D1B2A]/50 tracking-wide mb-3">飲める店</h2>
             <ul className="space-y-2">
-              {(stores as Store[]).map((s) => (
+              {stores.map((s) => (
                 <li key={s.id} className="border border-[#0D1B2A]/10 rounded-xl px-4 py-3 bg-white">
                   <p className="font-medium text-[#0D1B2A] text-sm">{s.name}</p>
                   {s.genre && <p className="text-xs text-[#0D1B2A]/50 mt-0.5">{s.genre}</p>}

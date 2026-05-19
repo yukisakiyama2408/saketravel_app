@@ -4,8 +4,8 @@ import { useRef, useState, useCallback, useEffect, useMemo } from "react";
 import Map, { Source, Layer, MapRef } from "react-map-gl/mapbox";
 import type { MapMouseEvent, LayerSpecification } from "react-map-gl/mapbox";
 import "mapbox-gl/dist/mapbox-gl.css";
-import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/components/AuthProvider";
+import { getRecordsByUser } from "@/lib/data";
 import type { Region, RecordWithJoin } from "@/types";
 import RegionPanel from "./RegionPanel";
 import SearchBox from "./SearchBox";
@@ -227,11 +227,7 @@ export default function MapView({
       setUserRecords([]);
       return;
     }
-    supabase
-      .from("records")
-      .select("*, drinks(*), regions(*)")
-      .eq("user_id", user.id)
-      .then(({ data }) => setUserRecords((data as RecordWithJoin[]) ?? []));
+    getRecordsByUser(user.id).then(setUserRecords);
   }, [user]);
 
   useEffect(() => {
@@ -381,13 +377,7 @@ export default function MapView({
         onClose={() => setSelectedRegion(null)}
         onRecordSaved={() => {
           if (!user) return;
-          supabase
-            .from("records")
-            .select("*, drinks(*), regions(*)")
-            .eq("user_id", user.id)
-            .then(({ data }) =>
-              setUserRecords((data as RecordWithJoin[]) ?? []),
-            );
+          getRecordsByUser(user.id).then(setUserRecords);
         }}
       />
 

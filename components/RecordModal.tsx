@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/components/AuthProvider";
+import { insertRecord } from "@/lib/data";
 import type { Drink } from "@/types";
 
 type Props = {
@@ -24,7 +24,7 @@ export default function RecordModal({ drink, onClose, onSaved }: Props) {
     setLoading(true);
     setError(null);
 
-    const { error } = await supabase.from("records").insert({
+    const { error } = await insertRecord({
       user_id: user.id,
       drink_id: drink.id,
       region_id: drink.region_id,

@@ -1,15 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { supabase } from "@/lib/supabase";
+import { searchDrinks } from "@/lib/data";
+import type { DrinkSearchResult } from "@/lib/data";
 import type { Region } from "@/types";
 
-type DrinkResult = {
-  id: string;
-  name: string;
-  genre: string;
-  region: Region;
-};
+type DrinkResult = DrinkSearchResult;
 
 type Props = {
   onSelectRegion: (region: Region) => void;
@@ -29,15 +25,8 @@ export default function SearchBox({ onSelectRegion }: Props) {
     }
 
     const timer = setTimeout(async () => {
-      const { data } = await supabase
-        .from("drinks")
-        .select(
-          "id, name, genre, region:regions(id, name, country, latitude, longitude, climate, food_culture, region_level, created_at)"
-        )
-        .ilike("name", `%${query}%`)
-        .limit(10);
-
-      setResults((data as unknown as DrinkResult[]) ?? []);
+      const data = await searchDrinks(query);
+      setResults(data);
       setIsOpen(true);
     }, 300);
 
