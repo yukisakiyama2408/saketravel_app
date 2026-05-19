@@ -1,16 +1,27 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Noto_Serif_JP, Noto_Sans_JP, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/AuthProvider";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const notoSerifJP = Noto_Serif_JP({
+  variable: "--font-noto-serif-jp",
   subsets: ["latin"],
+  weight: ["400", "700"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const notoSansJP = Noto_Sans_JP({
+  variable: "--font-noto-sans-jp",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
+
+const jetBrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains-mono",
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -25,12 +36,12 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-dvh overflow-hidden antialiased`}
+      lang="ja"
+      className={`${notoSerifJP.variable} ${notoSansJP.variable} ${jetBrainsMono.variable} h-dvh overflow-hidden antialiased`}
     >
       <body className="h-full">
-          <AuthProvider>{children}</AuthProvider>
-        </body>
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   );
 }

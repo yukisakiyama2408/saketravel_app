@@ -1,26 +1,79 @@
 @import "tailwindcss";
 
+/* ── Design Tokens ──────────────────────────────────────────────────────── */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Base colors */
+  --ink: #0D1B2A;
+  --amber: #C8893D;
+  --amber-dk: #A86F28;
+  --amber-lt: #E8B96A;
+  --washi: #F4EFE6;
+  --paper: #FBF8F1;
+  --paper-2: #FFFEFA;
+  --canvas: #ECEAE6;
+
+  /* Semantic */
+  --success: #5C8A66;
+  --danger: #B33A3A;
+
+  /* Ink opacity variants */
+  --ink-70: rgba(13, 27, 42, 0.70);
+  --ink-50: rgba(13, 27, 42, 0.50);
+  --ink-35: rgba(13, 27, 42, 0.35);
+  --ink-20: rgba(13, 27, 42, 0.20);
+  --ink-12: rgba(13, 27, 42, 0.12);
+  --ink-08: rgba(13, 27, 42, 0.08);
+  --ink-04: rgba(13, 27, 42, 0.04);
+
+  /* Amber tints */
+  --amber-tint: rgba(200, 137, 61, 0.12);
+  --amber-tint2: rgba(200, 137, 61, 0.22);
+
+  /* Shadows */
+  --sh-1: 0 1px 3px rgba(13, 27, 42, 0.08), 0 1px 2px rgba(13, 27, 42, 0.06);
+  --sh-2: 0 4px 12px rgba(13, 27, 42, 0.10), 0 2px 4px rgba(13, 27, 42, 0.06);
+  --sh-3: 0 8px 24px rgba(13, 27, 42, 0.12), 0 4px 8px rgba(13, 27, 42, 0.08);
+  --sh-sheet: 0 -4px 32px rgba(13, 27, 42, 0.12), 0 -1px 4px rgba(13, 27, 42, 0.06);
+
+  /* Radius */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-xl: 20px;
+
+  /* Fonts */
+  --font-serif: var(--font-noto-serif-jp);
+  --font-sans: var(--font-noto-sans-jp);
+  --font-mono: var(--font-jetbrains-mono);
 }
+
+/* ── Tailwind v4 theme registration ─────────────────────────────────────── */
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Colors */
+  --color-ink: var(--ink);
+  --color-amber: var(--amber);
+  --color-amber-dk: var(--amber-dk);
+  --color-amber-lt: var(--amber-lt);
+  --color-washi: var(--washi);
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-canvas: var(--canvas);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+
+  /* Fonts */
+  --font-serif: var(--font-noto-serif-jp);
+  --font-sans: var(--font-noto-sans-jp);
+  --font-mono: var(--font-jetbrains-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* ── Base styles ─────────────────────────────────────────────────────────── */
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans), "Hiragino Sans", sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
