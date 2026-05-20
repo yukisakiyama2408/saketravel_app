@@ -13,12 +13,28 @@ export const MOCK_USER_ID = "mock-user-001";
 
 const RECORDS_KEY = "sakemap_mock_records";
 
+const SEED_RECORDS: DrinkRecord[] = [
+  {
+    id: "mock-rec-seed-001",
+    user_id: MOCK_USER_ID,
+    drink_id: "d-dassai",
+    region_id: "r-yamaguchi",
+    date: "2026-01-15",
+    memo: "シードデータ",
+  },
+];
+
 function loadMockRecords(): DrinkRecord[] {
-  if (typeof window === "undefined") return [];
+  if (typeof window === "undefined") return SEED_RECORDS;
   try {
-    return JSON.parse(localStorage.getItem(RECORDS_KEY) ?? "[]");
+    const stored = localStorage.getItem(RECORDS_KEY);
+    if (stored === null) {
+      localStorage.setItem(RECORDS_KEY, JSON.stringify(SEED_RECORDS));
+      return SEED_RECORDS;
+    }
+    return JSON.parse(stored);
   } catch {
-    return [];
+    return SEED_RECORDS;
   }
 }
 

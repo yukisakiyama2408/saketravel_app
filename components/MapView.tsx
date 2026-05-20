@@ -270,23 +270,28 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
     });
   }, [regions, activeGenres, regionGenreMap]);
 
+  const recordedFilteredRegions = useMemo(
+    () => filteredRegions.filter((r) => recordedRegionIds.has(r.id)),
+    [filteredRegions, recordedRegionIds]
+  );
+
   const geojson = useMemo<GeoJSON.FeatureCollection>(
     () => ({
       type: "FeatureCollection",
-      features: filteredRegions.map((r) => ({
+      features: recordedFilteredRegions.map((r) => ({
         type: "Feature",
         geometry: { type: "Point", coordinates: [r.longitude, r.latitude] },
         properties: { id: r.id },
       })),
     }),
-    [filteredRegions]
+    [recordedFilteredRegions]
   );
 
   const prefectureDrinksGeojson = useMemo<GeoJSON.FeatureCollection>(() => {
     if (!prefectureBase) return { type: "FeatureCollection", features: [] };
     const features: GeoJSON.Feature[] = [];
     for (const f of prefectureBase.features) {
-      const match = filteredRegions.find((r) => regionInFeature(r, f));
+      const match = recordedFilteredRegions.find((r) => regionInFeature(r, f));
       if (match) {
         features.push({
           ...f,
@@ -295,11 +300,11 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
       }
     }
     return { type: "FeatureCollection", features };
-  }, [prefectureBase, filteredRegions]);
+  }, [prefectureBase, recordedFilteredRegions]);
 
   const worldDrinksGeojson = useMemo<GeoJSON.FeatureCollection>(() => {
     if (!worldAdmin1Base) return { type: "FeatureCollection", features: [] };
-    const nonJapanRegions = filteredRegions.filter((r) => r.country !== "日本");
+    const nonJapanRegions = recordedFilteredRegions.filter((r) => r.country !== "日本");
     if (nonJapanRegions.length === 0) return { type: "FeatureCollection", features: [] };
 
     const features: GeoJSON.Feature[] = [];
@@ -313,11 +318,11 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
       }
     }
     return { type: "FeatureCollection", features };
-  }, [worldAdmin1Base, filteredRegions]);
+  }, [worldAdmin1Base, recordedFilteredRegions]);
 
   const countryGroups = useMemo(() => {
     const byCountry: Record<string, Region[]> = {};
-    for (const r of filteredRegions) {
+    for (const r of recordedFilteredRegions) {
       if (!byCountry[r.country]) byCountry[r.country] = [];
       byCountry[r.country].push(r);
     }
@@ -331,7 +336,7 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
         },
       ])
     );
-  }, [filteredRegions]);
+  }, [recordedFilteredRegions]);
 
   const handleSelectFromSearch = useCallback((region: Region) => {
     const map = mapRef.current?.getMap();
@@ -363,7 +368,7 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
     if (prefFeatures.length > 0) {
       const regionId = prefFeatures[0].properties?.region_id as string | undefined;
       if (regionId) {
-        const region = filteredRegions.find((r) => r.id === regionId);
+        const region = recordedFilteredRegions.find((r) => r.id === regionId);
         if (region) { setSelectedRegion(region); return; }
       }
     }
@@ -373,11 +378,11 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
     if (worldFeatures.length > 0) {
       const regionId = worldFeatures[0].properties?.region_id as string | undefined;
       if (regionId) {
-        const region = filteredRegions.find((r) => r.id === regionId);
+        const region = recordedFilteredRegions.find((r) => r.id === regionId);
         if (region) setSelectedRegion(region);
       }
     }
-  }, [filteredRegions]);
+  }, [recordedFilteredRegions]);
 
   return (
     <div className="relative w-full h-full">
@@ -400,7 +405,7 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
             style={{ background: "var(--amber-dk)" }}
           >
             {[...activeGenres].map((g) => GENRE_LABELS[g]).join(" · ")}
-            &nbsp;· {filteredRegions.length}地域
+            &nbsp;· {recordedFilteredRegions.length}地域
           </div>
         </div>
       )}
@@ -442,7 +447,7 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
 
         {/* Individual pins (zoom >= ZOOM_THRESHOLD) */}
         {zoom >= ZOOM_THRESHOLD &&
-          filteredRegions.map((region) => (
+          recordedFilteredRegions.map((region) => (
             <Marker
               key={region.id}
               longitude={region.longitude}
