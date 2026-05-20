@@ -126,10 +126,13 @@ const prefectureFillLayer: LayerSpecification = {
   paint: {
     "fill-color": "#C8893D",
     "fill-opacity": [
-      "interpolate", ["linear"], ["zoom"],
-      2, 0.22,
-      ZOOM_THRESHOLD, 0.08,
-      12, 0.05,
+      "*",
+      ["case", ["==", ["get", "is_recorded"], true], 1, 0],
+      ["interpolate", ["linear"], ["zoom"],
+        2, 0.22,
+        ZOOM_THRESHOLD, 0.08,
+        12, 0.05,
+      ],
     ],
   },
 };
@@ -146,7 +149,7 @@ const prefectureBorderLayer: LayerSpecification = {
       ZOOM_THRESHOLD, 1.8,
       10, 2.2,
     ],
-    "line-opacity": 0.65,
+    "line-opacity": ["case", ["==", ["get", "is_recorded"], true], 0.65, 0],
   },
 };
 
@@ -157,10 +160,13 @@ const worldRegionFillLayer: LayerSpecification = {
   paint: {
     "fill-color": "#C8893D",
     "fill-opacity": [
-      "interpolate", ["linear"], ["zoom"],
-      2, 0.22,
-      ZOOM_THRESHOLD, 0.08,
-      12, 0.05,
+      "*",
+      ["case", ["==", ["get", "is_recorded"], true], 1, 0],
+      ["interpolate", ["linear"], ["zoom"],
+        2, 0.22,
+        ZOOM_THRESHOLD, 0.08,
+        12, 0.05,
+      ],
     ],
   },
 };
@@ -177,7 +183,7 @@ const worldRegionBorderLayer: LayerSpecification = {
       ZOOM_THRESHOLD, 1.8,
       10, 2.2,
     ],
-    "line-opacity": 0.65,
+    "line-opacity": ["case", ["==", ["get", "is_recorded"], true], 0.65, 0],
   },
 };
 
@@ -291,20 +297,24 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
     if (!prefectureBase) return { type: "FeatureCollection", features: [] };
     const features: GeoJSON.Feature[] = [];
     for (const f of prefectureBase.features) {
-      const match = recordedFilteredRegions.find((r) => regionInFeature(r, f));
+      const match = filteredRegions.find((r) => regionInFeature(r, f));
       if (match) {
         features.push({
           ...f,
-          properties: { ...(f.properties ?? {}), region_id: match.id },
+          properties: {
+            ...(f.properties ?? {}),
+            region_id: match.id,
+            is_recorded: recordedRegionIds.has(match.id),
+          },
         });
       }
     }
     return { type: "FeatureCollection", features };
-  }, [prefectureBase, recordedFilteredRegions]);
+  }, [prefectureBase, filteredRegions, recordedRegionIds]);
 
   const worldDrinksGeojson = useMemo<GeoJSON.FeatureCollection>(() => {
     if (!worldAdmin1Base) return { type: "FeatureCollection", features: [] };
-    const nonJapanRegions = recordedFilteredRegions.filter((r) => r.country !== "日本");
+    const nonJapanRegions = filteredRegions.filter((r) => r.country !== "日本");
     if (nonJapanRegions.length === 0) return { type: "FeatureCollection", features: [] };
 
     const features: GeoJSON.Feature[] = [];
@@ -313,16 +323,20 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
       if (match) {
         features.push({
           ...f,
-          properties: { ...(f.properties ?? {}), region_id: match.id },
+          properties: {
+            ...(f.properties ?? {}),
+            region_id: match.id,
+            is_recorded: recordedRegionIds.has(match.id),
+          },
         });
       }
     }
     return { type: "FeatureCollection", features };
-  }, [worldAdmin1Base, recordedFilteredRegions]);
+  }, [worldAdmin1Base, filteredRegions, recordedRegionIds]);
 
   const countryGroups = useMemo(() => {
     const byCountry: Record<string, Region[]> = {};
-    for (const r of recordedFilteredRegions) {
+    for (const r of filteredRegions) {
       if (!byCountry[r.country]) byCountry[r.country] = [];
       byCountry[r.country].push(r);
     }
@@ -336,7 +350,7 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
         },
       ])
     );
-  }, [recordedFilteredRegions]);
+  }, [filteredRegions]);
 
   const handleSelectFromSearch = useCallback((region: Region) => {
     const map = mapRef.current?.getMap();
@@ -368,7 +382,7 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
     if (prefFeatures.length > 0) {
       const regionId = prefFeatures[0].properties?.region_id as string | undefined;
       if (regionId) {
-        const region = recordedFilteredRegions.find((r) => r.id === regionId);
+        const region = filteredRegions.find((r) => r.id === regionId);
         if (region) { setSelectedRegion(region); return; }
       }
     }
@@ -378,11 +392,11 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
     if (worldFeatures.length > 0) {
       const regionId = worldFeatures[0].properties?.region_id as string | undefined;
       if (regionId) {
-        const region = recordedFilteredRegions.find((r) => r.id === regionId);
+        const region = filteredRegions.find((r) => r.id === regionId);
         if (region) setSelectedRegion(region);
       }
     }
-  }, [recordedFilteredRegions]);
+  }, [filteredRegions]);
 
   return (
     <div className="relative w-full h-full">
@@ -447,7 +461,7 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
 
         {/* Individual pins (zoom >= ZOOM_THRESHOLD) */}
         {zoom >= ZOOM_THRESHOLD &&
-          recordedFilteredRegions.map((region) => (
+          filteredRegions.map((region) => (
             <Marker
               key={region.id}
               longitude={region.longitude}
