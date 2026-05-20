@@ -126,13 +126,10 @@ const prefectureFillLayer: LayerSpecification = {
   paint: {
     "fill-color": "#C8893D",
     "fill-opacity": [
-      "*",
-      ["case", ["==", ["get", "is_recorded"], true], 1, 0],
-      ["interpolate", ["linear"], ["zoom"],
-        2, 0.22,
-        ZOOM_THRESHOLD, 0.08,
-        12, 0.05,
-      ],
+      "interpolate", ["linear"], ["zoom"],
+      2, ["case", ["==", ["get", "is_recorded"], true], 0.22, 0],
+      ZOOM_THRESHOLD, ["case", ["==", ["get", "is_recorded"], true], 0.08, 0],
+      12, ["case", ["==", ["get", "is_recorded"], true], 0.05, 0],
     ],
   },
 };
@@ -160,13 +157,10 @@ const worldRegionFillLayer: LayerSpecification = {
   paint: {
     "fill-color": "#C8893D",
     "fill-opacity": [
-      "*",
-      ["case", ["==", ["get", "is_recorded"], true], 1, 0],
-      ["interpolate", ["linear"], ["zoom"],
-        2, 0.22,
-        ZOOM_THRESHOLD, 0.08,
-        12, 0.05,
-      ],
+      "interpolate", ["linear"], ["zoom"],
+      2, ["case", ["==", ["get", "is_recorded"], true], 0.22, 0],
+      ZOOM_THRESHOLD, ["case", ["==", ["get", "is_recorded"], true], 0.08, 0],
+      12, ["case", ["==", ["get", "is_recorded"], true], 0.05, 0],
     ],
   },
 };
