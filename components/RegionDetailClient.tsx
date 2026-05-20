@@ -7,7 +7,6 @@ import { getRecordsByUser } from "@/lib/data";
 import DrinkCard from "@/components/DrinkCard";
 import StoreCard from "@/components/StoreCard";
 import type { Region, Drink, Store } from "@/types";
-import { REGION_STATS } from "@/lib/data/mock/region_stats";
 
 type Tab = "climate" | "food" | "drinks";
 
@@ -178,16 +177,16 @@ export default function RegionDetailClient({ region, drinks, stores }: Props) {
       {/* ── Tab content ── */}
       <div className="px-5 pt-5 pb-24">
         {activeTab === "climate" && (() => {
-          const stats = REGION_STATS[region.id];
+          const hasStats = region.annual_snowfall || region.avg_temperature || region.sake_breweries != null || region.water_hardness;
           return (
             <div>
-              {stats && (
+              {hasStats && (
                 <div className="grid grid-cols-2 gap-2 mb-5">
                   {[
-                    { label: "年間降雪量", value: stats.annual_snowfall ?? "─" },
-                    { label: "年間平均気温", value: stats.avg_temperature ?? "─" },
-                    { label: "酒蔵数", value: stats.sake_breweries != null ? `${stats.sake_breweries} 蔵` : "─" },
-                    { label: "水の硬度", value: stats.water_hardness ?? "─" },
+                    { label: "年間降雪量", value: region.annual_snowfall ?? "─" },
+                    { label: "年間平均気温", value: region.avg_temperature ?? "─" },
+                    { label: "酒蔵数", value: region.sake_breweries != null ? `${region.sake_breweries} 蔵` : "─" },
+                    { label: "水の硬度", value: region.water_hardness ?? "─" },
                   ].map(({ label, value }) => (
                     <div
                       key={label}

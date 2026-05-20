@@ -7,6 +7,11 @@ export type Region = {
   longitude: number;
   climate: string | null;
   food_culture: string | null;
+  annual_snowfall: string | null;
+  avg_temperature: string | null;
+  sake_breweries: number | null;
+  rice_variety: string | null;
+  water_hardness: string | null;
   created_at: string;
 };
 
@@ -18,6 +23,10 @@ export type Drink = {
   genre_category: "sake" | "wine" | "beer" | null;
   region_id: string;
   description: string | null;
+  nihonshu_do: number | null;
+  seimaibuai: number | null;
+  alcohol: number | null;
+  shuzou_mai: string | null;
   created_at: string;
 };
 

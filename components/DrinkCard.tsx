@@ -1,5 +1,4 @@
 import type { Drink } from "@/types";
-import { DRINK_SPECS } from "@/lib/data/mock/drink_specs";
 
 type Props = {
   drink: Drink;
@@ -8,15 +7,12 @@ type Props = {
 };
 
 export default function DrinkCard({ drink, recorded = false, onClick }: Props) {
-  const spec = DRINK_SPECS[drink.id];
-  const specLine = spec
-    ? [
-        spec.seimaibuai != null ? `精米 ${spec.seimaibuai}%` : null,
-        spec.alcohol != null ? `ALC ${spec.alcohol}%` : null,
-      ]
-        .filter(Boolean)
-        .join(" · ")
-    : null;
+  const specLine = [
+    drink.seimaibuai != null ? `精米 ${drink.seimaibuai}%` : null,
+    drink.alcohol != null ? `ALC ${drink.alcohol}%` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ") || null;
 
   return (
     <button

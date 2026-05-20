@@ -10,6 +10,10 @@ export const mockDrinks: Drink[] = [
     region_id: "r-yamaguchi",
     description:
       "山口県岩国市の旭酒造が醸す純米大吟醸。「磨き二割三分」など精米歩合へのこだわりが特徴。フルーティーな香りと繊細な味わいで、国内外で高い評価を受ける。",
+    nihonshu_do: -4,
+    seimaibuai: 23,
+    alcohol: 15.5,
+    shuzou_mai: "山田錦",
     created_at: "2026-01-01T00:00:00Z",
   },
   {
@@ -21,6 +25,10 @@ export const mockDrinks: Drink[] = [
     region_id: "r-yamaguchi",
     description:
       "山口県萩市の澄川酒造場が醸す銘酒。上品で繊細な甘みと透明感のある味わい。東杜氏・澄川宜史の技が光る一本。",
+    nihonshu_do: -2,
+    seimaibuai: 50,
+    alcohol: 15.0,
+    shuzou_mai: "山田錦",
     created_at: "2026-01-01T00:00:00Z",
   },
   {
@@ -32,6 +40,10 @@ export const mockDrinks: Drink[] = [
     region_id: "r-niigata",
     description:
       "新潟県長岡市の朝日酒造が醸す辛口日本酒の代表格。「淡麗辛口」という新潟の酒スタイルを確立した一本。シャープなキレと後味の美しさが特徴。",
+    nihonshu_do: 5,
+    seimaibuai: 50,
+    alcohol: 15.5,
+    shuzou_mai: "五百万石",
     created_at: "2026-01-01T00:00:00Z",
   },
   {
@@ -43,6 +55,10 @@ export const mockDrinks: Drink[] = [
     region_id: "r-niigata",
     description:
       "新潟県南魚沼市の八海醸造が造る銘酒。霊峰八海山の伏流水を使用。すっきりとした飲み口と米の旨みのバランスが絶妙な辛口酒。",
+    nihonshu_do: 3,
+    seimaibuai: 50,
+    alcohol: 15.8,
+    shuzou_mai: "五百万石",
     created_at: "2026-01-01T00:00:00Z",
   },
   {
@@ -54,6 +70,10 @@ export const mockDrinks: Drink[] = [
     region_id: "r-kyoto",
     description:
       "京都府伏見区の月桂冠株式会社が醸す歴史ある日本酒。創業1637年。伏見の名水「伏水」を使い、まろやかで飲みやすい味わいが特徴。",
+    nihonshu_do: 3,
+    seimaibuai: 70,
+    alcohol: 15.5,
+    shuzou_mai: "日本晴",
     created_at: "2026-01-01T00:00:00Z",
   },
   {
@@ -65,6 +85,10 @@ export const mockDrinks: Drink[] = [
     region_id: "r-bordeaux",
     description:
       "ボルドー5大シャトーの一つ。カベルネ・ソーヴィニヨンを主体とし、深い色調と複雑な香り、シルキーなタンニンが特徴。「ボルドーの女王」とも称される。",
+    nihonshu_do: null,
+    seimaibuai: null,
+    alcohol: 13.5,
+    shuzou_mai: null,
     created_at: "2026-01-01T00:00:00Z",
   },
   {
@@ -76,6 +100,10 @@ export const mockDrinks: Drink[] = [
     region_id: "r-napa",
     description:
       "ロバート・モンダヴィとムートン・ロートシルトの共同プロジェクトから生まれたカリフォルニアを代表するプレミアムワイン。豊かな果実味と長い余韻が特徴。",
+    nihonshu_do: null,
+    seimaibuai: null,
+    alcohol: 14.5,
+    shuzou_mai: null,
     created_at: "2026-01-01T00:00:00Z",
   },
   {
@@ -87,6 +115,10 @@ export const mockDrinks: Drink[] = [
     region_id: "r-czech",
     description:
       "世界初のピルスナービール。1842年にボヘミアのプルゼニュで誕生。ザーツ産ホップの爽やかな苦みと黄金色の透明感が特徴。ピルスナーという種類の元祖。",
+    nihonshu_do: null,
+    seimaibuai: null,
+    alcohol: 4.4,
+    shuzou_mai: null,
     created_at: "2026-01-01T00:00:00Z",
   },
 ];

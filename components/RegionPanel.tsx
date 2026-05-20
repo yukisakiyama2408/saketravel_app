@@ -8,8 +8,6 @@ import {
   getRecordsByDrink,
   getStoresByDrink,
 } from "@/lib/data";
-import { REGION_STATS } from "@/lib/data/mock/region_stats";
-import { DRINK_SPECS } from "@/lib/data/mock/drink_specs";
 import LoginModal from "@/components/LoginModal";
 import RecordModal from "@/components/RecordModal";
 import EditRecordModal from "@/components/EditRecordModal";
@@ -198,7 +196,7 @@ export default function RegionPanel({
 
                   <div className="px-5 pt-4 leading-relaxed">
                     {activeTab === "climate" && (() => {
-                      const stats = REGION_STATS[region.id];
+                      const hasStats = region.annual_snowfall || region.avg_temperature || region.sake_breweries != null || region.rice_variety;
                       return (
                         <div>
                           {/* Photo placeholder */}
@@ -215,13 +213,13 @@ export default function RegionPanel({
                           </div>
 
                           {/* Stats grid */}
-                          {stats && (
+                          {hasStats && (
                             <div className="grid grid-cols-2 gap-2 mb-4">
                               {[
-                                { label: "年間降雪量", value: stats.annual_snowfall ?? "─" },
-                                { label: "年間平均気温", value: stats.avg_temperature ?? "─" },
-                                { label: "酒蔵数", value: stats.sake_breweries != null ? `${stats.sake_breweries} 蔵` : "─" },
-                                { label: "代表的酒米", value: stats.rice_variety ?? "─" },
+                                { label: "年間降雪量", value: region.annual_snowfall ?? "─" },
+                                { label: "年間平均気温", value: region.avg_temperature ?? "─" },
+                                { label: "酒蔵数", value: region.sake_breweries != null ? `${region.sake_breweries} 蔵` : "─" },
+                                { label: "代表的酒米", value: region.rice_variety ?? "─" },
                               ].map(({ label, value }) => (
                                 <div
                                   key={label}
@@ -386,13 +384,10 @@ export default function RegionPanel({
                       </div>
                       {/* Spec row */}
                       {(() => {
-                        const spec = DRINK_SPECS[selectedDrink.id];
-                        const parts = spec
-                          ? [
-                              spec.seimaibuai != null ? `精米 ${spec.seimaibuai}%` : null,
-                              spec.alcohol != null ? `ALC ${spec.alcohol}%` : null,
-                            ].filter(Boolean)
-                          : [];
+                        const parts = [
+                          selectedDrink.seimaibuai != null ? `精米 ${selectedDrink.seimaibuai}%` : null,
+                          selectedDrink.alcohol != null ? `ALC ${selectedDrink.alcohol}%` : null,
+                        ].filter(Boolean);
                         return parts.length > 0 ? (
                           <p
                             className="text-[11px] mb-2"

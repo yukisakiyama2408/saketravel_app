@@ -12,6 +12,11 @@ export const mockRegions: Region[] = [
       "温暖な瀬戸内海性気候。年間を通じて温暖で降水量が少なく、日照時間が長い。山地と海岸線が複雑に入り組んだ地形が、良質な水源を生む。",
     food_culture:
       "フグ料理（ふぐ刺し・ふぐちり）が有名。新鮮な海産物と山の幸が揃い、豊かな食文化を形成。地酒との相性が抜群。",
+    annual_snowfall: "約 20 cm",
+    avg_temperature: "14.8°C",
+    sake_breweries: 28,
+    rice_variety: "西都の雫",
+    water_hardness: "軟水（硬度 35）",
     created_at: "2026-01-01T00:00:00Z",
   },
   {
@@ -25,6 +30,11 @@ export const mockRegions: Region[] = [
       "日本海側気候。冬は豪雪地帯として知られ、雪解け水が豊富で清冽な軟水が日本酒造りに最適。昼夜の寒暖差が大きい。",
     food_culture:
       "コシヒカリなど高品質な米の産地。へぎそば・のっぺ汁など独自の郷土料理が多い。日本一の酒蔵数を誇る地域。",
+    annual_snowfall: "約 300 cm",
+    avg_temperature: "13.2°C",
+    sake_breweries: 89,
+    rice_variety: "五百万石",
+    water_hardness: "軟水（硬度 25）",
     created_at: "2026-01-01T00:00:00Z",
   },
   {
@@ -38,6 +48,11 @@ export const mockRegions: Region[] = [
       "盆地特有の内陸性気候。夏は蒸し暑く、冬は底冷えする。伏見の地下水「伏見の御香水」は硬度が低く、まろやかな口当たりの酒を生む。",
     food_culture:
       "精進料理・懐石料理など繊細な京料理の本場。湯豆腐・京漬物・おばんざいなど上品な食文化が根付く。",
+    annual_snowfall: "約 30 cm",
+    avg_temperature: "15.1°C",
+    sake_breweries: 42,
+    rice_variety: "日本晴",
+    water_hardness: "軟水（硬度 28）",
     created_at: "2026-01-01T00:00:00Z",
   },
   {
@@ -51,6 +66,11 @@ export const mockRegions: Region[] = [
       "海洋性気候。ガロンヌ川とドルドーニュ川が流れ込むジロンド川河口の温暖な気候。年間降水量は適度でブドウ栽培に理想的。",
     food_culture:
       "カヌレ・マカロン・カスレなど地方料理が豊富。牛フィレのボルドー風など肉料理とワインの組み合わせが文化として根付いている。",
+    annual_snowfall: null,
+    avg_temperature: "13.5°C",
+    sake_breweries: null,
+    rice_variety: null,
+    water_hardness: null,
     created_at: "2026-01-01T00:00:00Z",
   },
   {
@@ -64,6 +84,11 @@ export const mockRegions: Region[] = [
       "地中海性気候。日中は温暖で夜は冷涼。カブリオソ山とマヤカマス山脈に囲まれた谷で、カベルネ・ソーヴィニヨンに最適な環境。",
     food_culture:
       "ファームtoテーブルの発祥地の一つ。新鮮な食材を活かしたカリフォルニア料理と世界トップクラスのワインが融合。",
+    annual_snowfall: null,
+    avg_temperature: "14.0°C",
+    sake_breweries: null,
+    rice_variety: null,
+    water_hardness: null,
     created_at: "2026-01-01T00:00:00Z",
   },
   {
@@ -77,6 +102,11 @@ export const mockRegions: Region[] = [
       "穏やかな大陸性気候。ザーツ産ホップの産地として世界的に有名。適度な降水量と温度差がホップの香りを豊かにする。",
     food_culture:
       "豚のすね肉のロースト・グラーシュなど濃厚な煮込み料理が主流。1人あたりのビール消費量が世界一と言われるビール文化の中心地。",
+    annual_snowfall: "約 50 cm",
+    avg_temperature: "8.5°C",
+    sake_breweries: null,
+    rice_variety: null,
+    water_hardness: null,
     created_at: "2026-01-01T00:00:00Z",
   },
 ];

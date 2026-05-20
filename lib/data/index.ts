@@ -123,9 +123,7 @@ export async function searchDrinks(query: string): Promise<DrinkSearchResult[]> 
   }
   const { data } = await supabase
     .from("drinks")
-    .select(
-      "id, name, genre, region:regions(id, name, country, latitude, longitude, climate, food_culture, region_level, created_at)"
-    )
+    .select("id, name, genre, region:regions(*)")
     .ilike("name", `%${query}%`)
     .limit(10);
   return (data as unknown as DrinkSearchResult[]) ?? [];

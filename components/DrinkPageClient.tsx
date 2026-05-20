@@ -9,7 +9,6 @@ import LoginModal from "@/components/LoginModal";
 import RecordModal from "@/components/RecordModal";
 import EditRecordModal from "@/components/EditRecordModal";
 import type { Drink, DrinkRecord, Region, Store } from "@/types";
-import { DRINK_SPECS } from "@/lib/data/mock/drink_specs";
 
 type Props = {
   drink: Drink & { region: Region };
@@ -124,16 +123,16 @@ export default function DrinkPageClient({ drink, stores }: Props) {
 
         {/* ── Spec strip ── */}
         {(() => {
-          const spec = DRINK_SPECS[drink.id];
-          if (!spec) return null;
-          const nihonshu_do = spec.nihonshu_do != null
-            ? (spec.nihonshu_do >= 0 ? `+${spec.nihonshu_do}` : `${spec.nihonshu_do}`)
+          const hasSpec = drink.nihonshu_do != null || drink.seimaibuai != null || drink.alcohol != null || drink.shuzou_mai;
+          if (!hasSpec) return null;
+          const nihonshu_do = drink.nihonshu_do != null
+            ? (drink.nihonshu_do >= 0 ? `+${drink.nihonshu_do}` : `${drink.nihonshu_do}`)
             : "─";
           const items = [
             { label: "日本酒度", value: nihonshu_do },
-            { label: "精米歩合", value: spec.seimaibuai != null ? `${spec.seimaibuai}%` : "─" },
-            { label: "アルコール", value: spec.alcohol != null ? `${spec.alcohol}%` : "─" },
-            { label: "酒米", value: spec.shuzou_mai ?? "─" },
+            { label: "精米歩合", value: drink.seimaibuai != null ? `${drink.seimaibuai}%` : "─" },
+            { label: "アルコール", value: drink.alcohol != null ? `${drink.alcohol}%` : "─" },
+            { label: "酒米", value: drink.shuzou_mai ?? "─" },
           ];
           return (
             <div
