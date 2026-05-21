@@ -47,6 +47,7 @@ export default function SearchBox({ onSelectRegion, recordedDrinkIds }: Props) {
     const timer = setTimeout(async () => {
       const data = await searchDrinks(query);
       setResults(data);
+      setActiveIndex(-1);
       setIsOpen(true);
     }, 300);
 
@@ -66,7 +67,31 @@ export default function SearchBox({ onSelectRegion, recordedDrinkIds }: Props) {
   function handleSelect(result: DrinkSearchResult) {
     setQuery("");
     setIsOpen(false);
+    setActiveIndex(-1);
     onSelectRegion(result.region);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (!isOpen || results.length === 0) {
+      if (e.key === "Escape") {
+        setQuery("");
+        setIsOpen(false);
+      }
+      return;
+    }
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIndex((i) => (i + 1) % results.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex((i) => (i <= 0 ? results.length - 1 : i - 1));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (activeIndex >= 0) handleSelect(results[activeIndex]);
+    } else if (e.key === "Escape") {
+      setIsOpen(false);
+      setActiveIndex(-1);
+    }
   }
 
   return (
@@ -76,6 +101,7 @@ export default function SearchBox({ onSelectRegion, recordedDrinkIds }: Props) {
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={handleKeyDown}
           placeholder="銘柄名で検索（例：獺祭）"
           className="w-full bg-white/95 backdrop-blur rounded-xl px-4 py-3 pr-10 text-sm placeholder-[#0D1B2A]/40 shadow-lg outline-none"
           style={{
