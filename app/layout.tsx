@@ -26,7 +26,7 @@ const jetBrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Sakemap",
+  title: "SakeTravel",
   description: "一杯で、世界を旅する。",
 };
 
