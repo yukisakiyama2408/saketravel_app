@@ -1,7 +1,8 @@
-type Genre = "sake" | "wine" | "beer";
+type Genre = "sake" | "wine" | "beer" | "shochu";
 
 const GENRES: { key: Genre; label: string; emoji: string }[] = [
   { key: "sake", label: "日本酒", emoji: "🍶" },
+  { key: "shochu", label: "焼酎", emoji: "🥃" },
   { key: "wine", label: "ワイン", emoji: "🍷" },
   { key: "beer", label: "ビール", emoji: "🍺" },
 ];

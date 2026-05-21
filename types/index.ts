@@ -20,7 +20,7 @@ export type Drink = {
   name: string;
   name_kana: string | null;
   genre: string;
-  genre_category: "sake" | "wine" | "beer" | null;
+  genre_category: "sake" | "wine" | "beer" | "shochu" | null;
   region_id: string;
   description: string | null;
   nihonshu_do: number | null;

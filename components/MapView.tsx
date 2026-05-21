@@ -23,7 +23,7 @@ function getZoomScope(zoom: number): string {
   return "LOCAL";
 }
 
-type Genre = "sake" | "wine" | "beer";
+type Genre = "sake" | "wine" | "beer" | "shochu";
 
 const COUNTRY_FLAGS: Record<string, string> = {
   "日本": "🇯🇵",
@@ -38,6 +38,7 @@ const COUNTRY_FLAGS: Record<string, string> = {
 
 const GENRE_LABELS: Record<Genre, string> = {
   sake: "🍶 日本酒",
+  shochu: "🥃 焼酎",
   wine: "🍷 ワイン",
   beer: "🍺 ビール",
 };
@@ -197,7 +198,7 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
   const [worldAdmin1Base, setWorldAdmin1Base] = useState<GeoJSON.FeatureCollection | null>(null);
   const [zoom, setZoom] = useState(2);
   const [activeGenres, setActiveGenres] = useState<Set<Genre>>(
-    new Set(["sake", "wine", "beer"])
+    new Set(["sake", "shochu", "wine", "beer"])
   );
   const [regionGenreMap, setRegionGenreMap] = useState<Record<string, Genre[]>>({});
 
@@ -263,7 +264,7 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
     : [];
 
   const filteredRegions = useMemo(() => {
-    if (activeGenres.size === 3) return regions;
+    if (activeGenres.size === 4) return regions;
     return regions.filter((r) => {
       const genres = regionGenreMap[r.id] ?? [];
       return genres.some((g) => activeGenres.has(g));
