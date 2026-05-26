@@ -35,8 +35,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (USE_MOCK) return;
 
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user);
+    supabase.auth.getUser().then(({ data: { user }, error }) => {
+      if (error) {
+        supabase.auth.signOut();
+        setUser(null);
+      } else {
+        setUser(user);
+      }
       setLoading(false);
     });
 
