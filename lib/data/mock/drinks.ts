@@ -14,6 +14,8 @@ export const mockDrinks: Drink[] = [
     seimaibuai: 23,
     alcohol: 15.5,
     shuzou_mai: "山田錦",
+    specs: null,
+    photo_url: null,
     created_at: "2026-01-01T00:00:00Z",
   },
   {
@@ -29,6 +31,8 @@ export const mockDrinks: Drink[] = [
     seimaibuai: 50,
     alcohol: 15.0,
     shuzou_mai: "山田錦",
+    specs: null,
+    photo_url: null,
     created_at: "2026-01-01T00:00:00Z",
   },
   {
@@ -44,6 +48,8 @@ export const mockDrinks: Drink[] = [
     seimaibuai: 50,
     alcohol: 15.5,
     shuzou_mai: "五百万石",
+    specs: null,
+    photo_url: null,
     created_at: "2026-01-01T00:00:00Z",
   },
   {
@@ -59,6 +65,8 @@ export const mockDrinks: Drink[] = [
     seimaibuai: 50,
     alcohol: 15.8,
     shuzou_mai: "五百万石",
+    specs: null,
+    photo_url: null,
     created_at: "2026-01-01T00:00:00Z",
   },
   {
@@ -74,6 +82,8 @@ export const mockDrinks: Drink[] = [
     seimaibuai: 70,
     alcohol: 15.5,
     shuzou_mai: "日本晴",
+    specs: null,
+    photo_url: null,
     created_at: "2026-01-01T00:00:00Z",
   },
   {
@@ -89,6 +99,8 @@ export const mockDrinks: Drink[] = [
     seimaibuai: null,
     alcohol: 13.5,
     shuzou_mai: null,
+    specs: null,
+    photo_url: null,
     created_at: "2026-01-01T00:00:00Z",
   },
   {
@@ -104,6 +116,8 @@ export const mockDrinks: Drink[] = [
     seimaibuai: null,
     alcohol: 14.5,
     shuzou_mai: null,
+    specs: null,
+    photo_url: null,
     created_at: "2026-01-01T00:00:00Z",
   },
   {
@@ -119,6 +133,8 @@ export const mockDrinks: Drink[] = [
     seimaibuai: null,
     alcohol: 4.4,
     shuzou_mai: null,
+    specs: null,
+    photo_url: null,
     created_at: "2026-01-01T00:00:00Z",
   },
 ];
