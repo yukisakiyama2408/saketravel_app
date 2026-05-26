@@ -33,16 +33,25 @@ export default function DrinkCard({ drink, recorded = false, onClick }: Props) {
         e.currentTarget.style.boxShadow = "";
       }}
     >
-      {/* Thumbnail placeholder */}
-      <div
-        className="flex-shrink-0 rounded-lg"
-        style={{
-          width: 40,
-          height: 48,
-          background:
-            "repeating-linear-gradient(45deg, var(--canvas), var(--canvas) 4px, var(--paper) 4px, var(--paper) 8px)",
-        }}
-      />
+      {/* Thumbnail */}
+      {drink.photo_url ? (
+        <img
+          src={drink.photo_url}
+          alt={drink.name}
+          className="flex-shrink-0 rounded-lg object-contain"
+          style={{ width: 40, height: 48 }}
+        />
+      ) : (
+        <div
+          className="flex-shrink-0 rounded-lg"
+          style={{
+            width: 40,
+            height: 48,
+            background:
+              "repeating-linear-gradient(45deg, var(--canvas), var(--canvas) 4px, var(--paper) 4px, var(--paper) 8px)",
+          }}
+        />
+      )}
 
       {/* Name + meta */}
       <div className="flex-1 min-w-0">

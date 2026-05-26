@@ -9,6 +9,7 @@ import LoginModal from "@/components/LoginModal";
 import RecordModal from "@/components/RecordModal";
 import EditRecordModal from "@/components/EditRecordModal";
 import type { Drink, DrinkRecord, Region, Store } from "@/types";
+import { GENRE_SPECS } from "@/lib/drinkSpecs";
 
 type Props = {
   drink: Drink & { region: Region };
@@ -93,17 +94,25 @@ export default function DrinkPageClient({ drink, stores }: Props) {
               "linear-gradient(160deg, #2a1200 0%, #1a0c00 55%, #0D1B2A 100%)",
           }}
         >
-          {/* Bottle placeholder */}
-          <div
-            className="absolute right-10 top-1/2 -translate-y-1/2 rounded"
-            style={{
-              width: 44,
-              height: 120,
-              background:
-                "repeating-linear-gradient(45deg, rgba(255,255,255,0.07), rgba(255,255,255,0.07) 4px, rgba(255,255,255,0.02) 4px, rgba(255,255,255,0.02) 8px)",
-              borderRadius: 4,
-            }}
-          />
+          {drink.photo_url ? (
+            <img
+              src={drink.photo_url}
+              alt={drink.name}
+              className="absolute inset-0 w-full h-full object-contain drop-shadow-lg"
+              style={{ padding: "16px 80px 16px 24px" }}
+            />
+          ) : (
+            <div
+              className="absolute right-10 top-1/2 -translate-y-1/2 rounded"
+              style={{
+                width: 44,
+                height: 120,
+                background:
+                  "repeating-linear-gradient(45deg, rgba(255,255,255,0.07), rgba(255,255,255,0.07) 4px, rgba(255,255,255,0.02) 4px, rgba(255,255,255,0.02) 8px)",
+                borderRadius: 4,
+              }}
+            />
+          )}
 
           {/* Mono tag bottom-left */}
           <div className="absolute bottom-4 left-5">
@@ -123,36 +132,32 @@ export default function DrinkPageClient({ drink, stores }: Props) {
 
         {/* ── Spec strip ── */}
         {(() => {
-          const hasSpec = drink.nihonshu_do != null || drink.seimaibuai != null || drink.alcohol != null || drink.shuzou_mai;
-          if (!hasSpec) return null;
-          const nihonshu_do = drink.nihonshu_do != null
-            ? (drink.nihonshu_do >= 0 ? `+${drink.nihonshu_do}` : `${drink.nihonshu_do}`)
-            : "─";
-          const items = [
-            { label: "日本酒度", value: nihonshu_do },
-            { label: "精米歩合", value: drink.seimaibuai != null ? `${drink.seimaibuai}%` : "─" },
-            { label: "アルコール", value: drink.alcohol != null ? `${drink.alcohol}%` : "─" },
-            { label: "酒米", value: drink.shuzou_mai ?? "─" },
-          ];
+          const specDefs = GENRE_SPECS[drink.genre] ?? [];
+          const items = specDefs.filter(({ key }) => drink.specs?.[key]);
+          if (items.length === 0) return null;
           return (
             <div
-              className="grid grid-cols-4"
-              style={{ background: "var(--paper)", borderBottom: "1px solid var(--ink-08)" }}
+              className="grid"
+              style={{
+                gridTemplateColumns: `repeat(${items.length}, 1fr)`,
+                background: "var(--paper)",
+                borderBottom: "1px solid var(--ink-08)",
+              }}
             >
-              {items.map((item, i) => (
+              {items.map(({ key, label }, i) => (
                 <div
-                  key={item.label}
+                  key={key}
                   className="py-3 text-center"
-                  style={{ borderRight: i < 3 ? "1px solid var(--ink-08)" : undefined }}
+                  style={{ borderRight: i < items.length - 1 ? "1px solid var(--ink-08)" : undefined }}
                 >
                   <p
                     className="text-[17px] font-bold leading-none"
                     style={{ fontFamily: "var(--font-mono)", color: "var(--ink)" }}
                   >
-                    {item.value}
+                    {drink.specs![key]}
                   </p>
                   <p className="text-[10px] mt-1" style={{ color: "var(--ink-35)" }}>
-                    {item.label}
+                    {label}
                   </p>
                 </div>
               ))}

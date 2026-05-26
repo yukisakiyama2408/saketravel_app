@@ -27,6 +27,8 @@ export type Drink = {
   seimaibuai: number | null;
   alcohol: number | null;
   shuzou_mai: string | null;
+  specs: Record<string, string> | null;
+  photo_url: string | null;
   created_at: string;
 };
 

@@ -359,16 +359,25 @@ export default function RegionPanel({
 
                   {/* 5-2: Hero row */}
                   <div className="px-5 pb-5 flex gap-4">
-                    {/* Thumbnail placeholder */}
-                    <div
-                      className="flex-shrink-0 rounded-lg"
-                      style={{
-                        width: 56,
-                        height: 92,
-                        background:
-                          "repeating-linear-gradient(45deg, var(--canvas), var(--canvas) 4px, var(--paper) 4px, var(--paper) 8px)",
-                      }}
-                    />
+                    {/* Thumbnail */}
+                    {selectedDrink.photo_url ? (
+                      <img
+                        src={selectedDrink.photo_url}
+                        alt={selectedDrink.name}
+                        className="flex-shrink-0 rounded-lg object-contain"
+                        style={{ width: 80, height: 128 }}
+                      />
+                    ) : (
+                      <div
+                        className="flex-shrink-0 rounded-lg"
+                        style={{
+                          width: 56,
+                          height: 92,
+                          background:
+                            "repeating-linear-gradient(45deg, var(--canvas), var(--canvas) 4px, var(--paper) 4px, var(--paper) 8px)",
+                        }}
+                      />
+                    )}
                     <div className="flex-1 min-w-0">
                       {/* Genre pill */}
                       <div className="flex flex-wrap gap-1.5 mb-2">
