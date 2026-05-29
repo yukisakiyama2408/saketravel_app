@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { getRecordsByUser } from "@/lib/data";
-import DrinkCard from "@/components/DrinkCard";
 import StoreCard from "@/components/StoreCard";
 import type { Region, Drink, Store } from "@/types";
 
@@ -81,6 +80,16 @@ export default function RegionDetailClient({ region, drinks, stores }: Props) {
             "linear-gradient(160deg, #2a1200 0%, #1a0c00 55%, #0D1B2A 100%)",
         }}
       >
+        {region.photo_url && (
+          <>
+            <img
+              src={region.photo_url}
+              alt={region.name}
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+            <div className="absolute inset-0 bg-[#0D1B2A]/45" />
+          </>
+        )}
         <div className="absolute bottom-0 left-0 right-0 px-5 pb-5">
           <p
             className="text-[11px] uppercase tracking-widest mb-1.5"
@@ -215,12 +224,14 @@ export default function RegionDetailClient({ region, drinks, stores }: Props) {
         })()}
 
         {activeTab === "food" && (
-          <p
-            className="text-sm leading-relaxed"
-            style={{ color: "var(--ink-70)" }}
-          >
-            {region.food_culture ?? "情報準備中"}
-          </p>
+          <div>
+            <p
+              className="text-sm leading-relaxed"
+              style={{ color: "var(--ink-70)" }}
+            >
+              {region.food_culture ?? "情報準備中"}
+            </p>
+          </div>
         )}
 
         {activeTab === "drinks" && (
@@ -230,12 +241,10 @@ export default function RegionDetailClient({ region, drinks, stores }: Props) {
                 銘柄データなし
               </p>
             ) : (
-              <ul className="space-y-2 mb-8">
+              <ul className="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {drinks.map((d) => (
                   <li key={d.id}>
-                    <Link href={`/drinks/${d.id}`}>
-                      <DrinkCard drink={d} recorded={recordedDrinkIds.has(d.id)} />
-                    </Link>
+                    <RegionDrinkGridCard drink={d} recorded={recordedDrinkIds.has(d.id)} />
                   </li>
                 ))}
               </ul>
@@ -265,6 +274,78 @@ export default function RegionDetailClient({ region, drinks, stores }: Props) {
         )}
       </div>
     </div>
+  );
+}
+
+function RegionDrinkGridCard({ drink, recorded }: { drink: Drink; recorded: boolean }) {
+  return (
+    <Link
+      href={`/drinks/${drink.id}`}
+      className="flex h-full flex-col rounded-xl border p-3 transition-colors hover:bg-[#F4EFE6]"
+      style={{ borderColor: "var(--ink-08)", background: "var(--paper-2)" }}
+    >
+      <div className="mb-3 grid place-items-center">
+        <div
+          className="flex aspect-[2/3] w-[112px] items-center justify-center overflow-hidden rounded-lg p-1.5"
+          style={{ background: "var(--washi)", border: "1px solid var(--ink-04)" }}
+        >
+          {drink.photo_url ? (
+            <img
+              src={drink.photo_url}
+              alt={drink.name}
+              className="h-full w-full object-contain drop-shadow-sm"
+            />
+          ) : (
+            <div
+              className="h-full w-full rounded"
+              style={{
+                background:
+                  "repeating-linear-gradient(45deg, #f0ebe4, #f0ebe4 3px, #f8f3ec 3px, #f8f3ec 6px)",
+                border: "1px solid var(--ink-08)",
+              }}
+            />
+          )}
+        </div>
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <p
+          className="truncate text-base font-semibold"
+          style={{ fontFamily: "var(--font-serif)", color: "var(--ink)" }}
+        >
+          {drink.name}
+        </p>
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          <span
+            className="inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold"
+            style={{
+              background: "var(--amber-tint)",
+              border: "1px solid rgba(200,137,61,0.22)",
+              color: "var(--amber-dk)",
+            }}
+          >
+            {drink.genre}
+          </span>
+          {recorded && (
+            <span
+              className="inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold"
+              style={{
+                background: "rgba(92,138,102,0.12)",
+                border: "1px solid rgba(92,138,102,0.22)",
+                color: "var(--success)",
+              }}
+            >
+              記録済み
+            </span>
+          )}
+        </div>
+        {drink.description && (
+          <p className="mt-2 line-clamp-2 text-xs leading-relaxed" style={{ color: "var(--ink-70)" }}>
+            {drink.description}
+          </p>
+        )}
+      </div>
+    </Link>
   );
 }
 

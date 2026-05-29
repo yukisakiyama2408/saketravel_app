@@ -199,18 +199,7 @@ export default function RegionPanel({
                       const hasStats = region.annual_snowfall || region.avg_temperature || region.sake_breweries != null || region.rice_variety;
                       return (
                         <div>
-                          {/* Photo placeholder */}
-                          <div
-                            className="rounded-xl mb-4 flex items-center justify-center"
-                            style={{ height: 110, background: "var(--ink-04)" }}
-                          >
-                            <p
-                              className="text-[11px]"
-                              style={{ fontFamily: "var(--font-mono)", color: "var(--ink-20)" }}
-                            >
-                              📷 PHOTO COMING SOON
-                            </p>
-                          </div>
+                          <RegionPhoto region={region} />
 
                           {/* Stats grid */}
                           {hasStats && (
@@ -241,18 +230,7 @@ export default function RegionPanel({
                     })()}
                     {activeTab === "food" && (
                       <div>
-                        {/* Photo placeholder */}
-                        <div
-                          className="rounded-xl mb-4 flex items-center justify-center"
-                          style={{ height: 110, background: "var(--ink-04)" }}
-                        >
-                          <p
-                            className="text-[11px]"
-                            style={{ fontFamily: "var(--font-mono)", color: "var(--ink-20)" }}
-                          >
-                            📷 PHOTO COMING SOON
-                          </p>
-                        </div>
+                        <RegionPhoto region={region} />
 
                         <p className="text-sm leading-relaxed" style={{ color: "var(--ink-70)" }}>
                           {region.food_culture ?? "情報準備中"}
@@ -606,5 +584,29 @@ export default function RegionPanel({
         </div>
       </div>
     </>
+  );
+}
+
+function RegionPhoto({ region }: { region: Region }) {
+  return (
+    <div
+      className="mb-4 flex aspect-[16/9] items-center justify-center overflow-hidden rounded-xl"
+      style={{ background: "var(--ink-04)", border: "1px solid var(--ink-08)" }}
+    >
+      {region.photo_url ? (
+        <img
+          src={region.photo_url}
+          alt={region.name}
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <p
+          className="text-[11px]"
+          style={{ fontFamily: "var(--font-mono)", color: "var(--ink-20)" }}
+        >
+          PHOTO COMING SOON
+        </p>
+      )}
+    </div>
   );
 }

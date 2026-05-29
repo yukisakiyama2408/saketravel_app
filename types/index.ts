@@ -7,6 +7,7 @@ export type Region = {
   longitude: number;
   climate: string | null;
   food_culture: string | null;
+  photo_url: string | null;
   annual_snowfall: string | null;
   avg_temperature: string | null;
   sake_breweries: number | null;

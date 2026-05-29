@@ -4,10 +4,31 @@ import { adminClient } from "@/lib/supabase-admin";
 const inp = "w-full border border-[#0D1B2A]/10 rounded-lg px-3 py-2 text-sm text-[#0D1B2A] bg-[#F8F3EC] outline-none focus:ring-1 focus:ring-[#E8A045] placeholder-[#0D1B2A]/30";
 const btn = "w-full bg-[#E8A045] text-white rounded-lg py-2 text-sm font-semibold";
 const label = "text-[11px] font-semibold text-[#0D1B2A]/50";
+const fileInp = "w-full text-sm text-[#0D1B2A]/60 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#E8A045]/10 file:text-[#E8A045] cursor-pointer";
+const urlInp = "w-full border border-[#0D1B2A]/10 rounded-lg px-3 py-2 text-sm text-[#0D1B2A] bg-[#F8F3EC] outline-none focus:ring-1 focus:ring-[#E8A045] placeholder-[#0D1B2A]/30";
+
+async function uploadPhoto(db: ReturnType<typeof adminClient>, id: string, file: File): Promise<string | null> {
+  const { data, error } = await db.storage.from("images").upload(`regions/${id}`, file, { upsert: true });
+  if (error || !data) return null;
+  return db.storage.from("images").getPublicUrl(data.path).data.publicUrl;
+}
+
+async function resolvePhotoUrl(
+  db: ReturnType<typeof adminClient>,
+  id: string,
+  fd: FormData
+): Promise<string | null | undefined> {
+  const file = fd.get("photo") as File;
+  if (file && file.size > 0) return uploadPhoto(db, id, file);
+  const urlInput = (fd.get("photo_url_input") as string ?? "").trim();
+  if (urlInput) return urlInput;
+  return undefined;
+}
 
 async function addRegion(fd: FormData) {
   "use server";
-  await adminClient().from("regions").insert({
+  const db = adminClient();
+  const { data: region } = await db.from("regions").insert({
     name: fd.get("name") as string,
     region_level: fd.get("region_level") as string,
     country: fd.get("country") as string,
@@ -15,13 +36,22 @@ async function addRegion(fd: FormData) {
     longitude: parseFloat(fd.get("longitude") as string),
     climate: (fd.get("climate") as string) || null,
     food_culture: (fd.get("food_culture") as string) || null,
-  });
+  }).select("id").single();
+
+  if (region) {
+    const photoUrl = await resolvePhotoUrl(db, region.id, fd);
+    if (photoUrl) await db.from("regions").update({ photo_url: photoUrl }).eq("id", region.id);
+  }
   revalidatePath("/admin/regions");
 }
 
 async function updateRegion(fd: FormData) {
   "use server";
-  await adminClient().from("regions").update({
+  const id = fd.get("id") as string;
+  const db = adminClient();
+  const photoUrl = await resolvePhotoUrl(db, id, fd);
+
+  await db.from("regions").update({
     name: fd.get("name") as string,
     region_level: fd.get("region_level") as string,
     country: fd.get("country") as string,
@@ -29,13 +59,17 @@ async function updateRegion(fd: FormData) {
     longitude: parseFloat(fd.get("longitude") as string),
     climate: (fd.get("climate") as string) || null,
     food_culture: (fd.get("food_culture") as string) || null,
-  }).eq("id", fd.get("id") as string);
+    ...(photoUrl !== undefined && { photo_url: photoUrl }),
+  }).eq("id", id);
   revalidatePath("/admin/regions");
 }
 
 async function deleteRegion(fd: FormData) {
   "use server";
-  await adminClient().from("regions").delete().eq("id", fd.get("id") as string);
+  const id = fd.get("id") as string;
+  const db = adminClient();
+  await db.storage.from("images").remove([`regions/${id}`]);
+  await db.from("regions").delete().eq("id", id);
   revalidatePath("/admin/regions");
 }
 
@@ -74,6 +108,7 @@ export default async function RegionsPage({
               </div>
               <Field labelText="気候・地形"><textarea name="climate" defaultValue={editingRegion.climate ?? ""} rows={3} className={inp} /></Field>
               <Field labelText="食文化"><textarea name="food_culture" defaultValue={editingRegion.food_culture ?? ""} rows={3} className={inp} /></Field>
+              <PhotoInputSection currentUrl={editingRegion.photo_url} currentName={editingRegion.name} />
               <div className="flex gap-2 pt-1">
                 <button type="submit" className={btn}>保存</button>
                 <a href="/admin/regions" className="w-full rounded-lg border border-[#0D1B2A]/20 py-2 text-center text-sm text-[#0D1B2A]/60">キャンセル</a>
@@ -105,6 +140,7 @@ export default async function RegionsPage({
             </div>
             <Field labelText="気候・地形"><textarea name="climate" placeholder="気候・地形" rows={3} className={inp} /></Field>
             <Field labelText="食文化"><textarea name="food_culture" placeholder="食文化" rows={3} className={inp} /></Field>
+            <PhotoInputSection />
             <button type="submit" className={btn}>追加する</button>
           </form>
         </section>
@@ -115,6 +151,16 @@ export default async function RegionsPage({
             {regions?.map((r) => (
               <li key={r.id}>
                 <div className="flex h-full flex-col rounded-xl border p-4" style={{ borderColor: "var(--ink-08)", background: "var(--paper-2)" }}>
+                  <div
+                    className="mb-3 flex aspect-[4/3] items-center justify-center overflow-hidden rounded-lg"
+                    style={{ background: "var(--washi)", border: "1px solid var(--ink-04)" }}
+                  >
+                    {r.photo_url ? (
+                      <img src={r.photo_url} alt={r.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="h-full w-full" style={{ background: "repeating-linear-gradient(45deg, #f0ebe4, #f0ebe4 6px, #f8f3ec 6px, #f8f3ec 12px)" }} />
+                    )}
+                  </div>
                   <div className="mb-3">
                     <p className="truncate text-base font-semibold" style={{ fontFamily: "var(--font-serif)", color: "var(--ink)" }}>{r.name}</p>
                     <span className="mt-1.5 inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold" style={{ background: "var(--amber-tint)", border: "1px solid rgba(200,137,61,0.22)", color: "var(--amber-dk)" }}>{r.region_level}</span>
@@ -187,6 +233,24 @@ function CardActions({ editHref, deleteAction, id }: { editHref: string; deleteA
         <input type="hidden" name="id" value={id} />
         <button type="submit" className="w-full rounded-full border border-red-500/20 px-3 py-1.5 text-xs font-semibold text-red-500">削除</button>
       </form>
+    </div>
+  );
+}
+
+function PhotoInputSection({ currentUrl, currentName }: { currentUrl?: string | null; currentName?: string }) {
+  return (
+    <div>
+      <p className="mb-1.5 text-xs text-[#0D1B2A]/50">代表画像（任意）</p>
+      {currentUrl && (
+        <img src={currentUrl} alt={currentName} className="mb-2 h-24 w-full rounded-lg object-cover opacity-90" />
+      )}
+      <input name="photo" type="file" accept="image/*" className={fileInp} />
+      <div className="my-2 flex items-center gap-2">
+        <div className="h-px flex-1 bg-[#0D1B2A]/10" />
+        <span className="text-xs text-[#0D1B2A]/30">または URL</span>
+        <div className="h-px flex-1 bg-[#0D1B2A]/10" />
+      </div>
+      <input name="photo_url_input" type="url" placeholder="https://..." defaultValue={currentUrl ?? ""} className={urlInp} />
     </div>
   );
 }
