@@ -24,11 +24,23 @@ export default function DrinkPageClient({ drink, stores }: Props) {
   const [editingRecord, setEditingRecord] = useState<DrinkRecord | null>(null);
 
   useEffect(() => {
-    if (!user) { setDrinkRecords([]); return; }
-    getRecordsByDrink(drink.id, user.id).then(setDrinkRecords);
+    let ignore = false;
+    const records = user
+      ? getRecordsByDrink(drink.id, user.id)
+      : Promise.resolve([]);
+
+    records.then((nextRecords) => {
+      if (!ignore) setDrinkRecords(nextRecords);
+    });
+
+    return () => {
+      ignore = true;
+    };
   }, [user, drink.id]);
 
   const isRecorded = drinkRecords.length > 0;
+  const specDefs = GENRE_SPECS[drink.genre] ?? [];
+  const specItems = specDefs.filter(({ key }) => drink.specs?.[key]);
 
   function refreshRecords() {
     if (!user) return;
@@ -85,92 +97,7 @@ export default function DrinkPageClient({ drink, stores }: Props) {
           </button>
         </header>
 
-        {/* ── Hero 240px ── */}
-        <div
-          className="relative"
-          style={{
-            height: 240,
-            background:
-              "linear-gradient(160deg, #2a1200 0%, #1a0c00 55%, #0D1B2A 100%)",
-          }}
-        >
-          {drink.photo_url ? (
-            <img
-              src={drink.photo_url}
-              alt={drink.name}
-              className="absolute inset-0 w-full h-full object-contain drop-shadow-lg"
-              style={{ padding: "16px 80px 16px 24px" }}
-            />
-          ) : (
-            <div
-              className="absolute right-10 top-1/2 -translate-y-1/2 rounded"
-              style={{
-                width: 44,
-                height: 120,
-                background:
-                  "repeating-linear-gradient(45deg, rgba(255,255,255,0.07), rgba(255,255,255,0.07) 4px, rgba(255,255,255,0.02) 4px, rgba(255,255,255,0.02) 8px)",
-                borderRadius: 4,
-              }}
-            />
-          )}
-
-          {/* Mono tag bottom-left */}
-          <div className="absolute bottom-4 left-5">
-            <span
-              className="text-[10px] px-2 py-1 rounded"
-              style={{
-                fontFamily: "var(--font-mono)",
-                background: "rgba(200,137,61,0.15)",
-                color: "rgba(200,137,61,0.9)",
-                border: "1px solid rgba(200,137,61,0.25)",
-              }}
-            >
-              {drink.name}
-            </span>
-          </div>
-        </div>
-
-        {/* ── Spec strip ── */}
-        {(() => {
-          const specDefs = GENRE_SPECS[drink.genre] ?? [];
-          const items = specDefs.filter(({ key }) => drink.specs?.[key]);
-          if (items.length === 0) return null;
-          return (
-            <div
-              className="grid"
-              style={{
-                gridTemplateColumns: `repeat(${items.length}, 1fr)`,
-                background: "var(--paper)",
-                borderBottom: "1px solid var(--ink-08)",
-              }}
-            >
-              {items.map(({ key, label }, i) => (
-                <div
-                  key={key}
-                  className="py-3 text-center"
-                  style={{ borderRight: i < items.length - 1 ? "1px solid var(--ink-08)" : undefined }}
-                >
-                  <p
-                    className="text-[17px] font-bold leading-none"
-                    style={{ fontFamily: "var(--font-mono)", color: "var(--ink)" }}
-                  >
-                    {drink.specs![key]}
-                  </p>
-                  <p className="text-[10px] mt-1" style={{ color: "var(--ink-35)" }}>
-                    {label}
-                  </p>
-                </div>
-              ))}
-            </div>
-          );
-        })()}
-
-        {/* ── Drink info ── */}
-        <div
-          className="px-5 pt-5 pb-1"
-          style={{ background: "var(--paper)" }}
-        >
-          {/* Kicker */}
+        <main className="mx-auto w-full max-w-[940px] px-5 pt-5 pb-24 md:px-8 md:pt-9">
           <p
             className="text-[11px] mb-1"
             style={{
@@ -181,15 +108,13 @@ export default function DrinkPageClient({ drink, stores }: Props) {
             {drink.region.name} / {drink.genre}
           </p>
 
-          {/* Title */}
           <h1
-            className="text-[28px] font-bold leading-tight mb-1"
+            className="text-[28px] font-bold leading-tight mb-1 md:text-[38px]"
             style={{ fontFamily: "var(--font-serif)", color: "var(--ink)" }}
           >
             {drink.name}
           </h1>
 
-          {/* Sub: kana · country */}
           <p
             className="text-[11px] mb-4"
             style={{
@@ -201,27 +126,115 @@ export default function DrinkPageClient({ drink, stores }: Props) {
             {drink.region.country}
           </p>
 
-          {/* Description */}
-          {drink.description ? (
-            <p
-              className="text-sm pb-5"
-              style={{ color: "var(--ink-70)", lineHeight: 1.85 }}
+          <div
+            className="grid grid-cols-[86px_1fr] gap-4 items-start p-4 md:grid-cols-[190px_1fr] md:gap-6 md:p-[22px]"
+            style={{
+              background: "var(--washi)",
+              border: "1px solid var(--ink-08)",
+              borderRadius: "var(--r-lg)",
+            }}
+          >
+            <div
+              className="aspect-[2/3] w-full flex items-center justify-center overflow-hidden p-2 md:p-3"
+              style={{
+                background: "rgba(255,255,255,0.36)",
+                border: "1px solid var(--ink-04)",
+                borderRadius: "var(--r-md)",
+              }}
             >
-              {drink.description}
-            </p>
-          ) : (
-            <p className="text-sm pb-5" style={{ color: "var(--ink-35)" }}>
-              説明情報準備中
-            </p>
-          )}
-        </div>
+              {drink.photo_url ? (
+                <img
+                  src={drink.photo_url}
+                  alt={drink.name}
+                  className="h-full w-full object-contain drop-shadow-md"
+                />
+              ) : (
+                <div
+                  className="h-28 w-11 rounded md:h-[158px] md:w-[68px]"
+                  style={{
+                    background:
+                      "repeating-linear-gradient(45deg, var(--canvas), var(--canvas) 4px, var(--paper) 4px, var(--paper) 8px)",
+                    border: "1px solid var(--ink-08)",
+                  }}
+                />
+              )}
+            </div>
 
-        <div className="px-5 pt-5 pb-24">
+            <div className="min-w-0">
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                <span
+                  className="text-[11px] px-2.5 py-1 rounded-full font-semibold"
+                  style={{
+                    background: "var(--amber-tint)",
+                    border: "1px solid rgba(200,137,61,0.24)",
+                    color: "var(--amber-dk)",
+                  }}
+                >
+                  {drink.genre}
+                </span>
+                {specItems.slice(0, 3).map(({ key, label }) => (
+                  <span
+                    key={key}
+                    className="text-[11px] px-2.5 py-1 rounded-full"
+                    style={{
+                      background: "var(--paper-2)",
+                      border: "1px solid var(--ink-08)",
+                      color: "var(--ink-50)",
+                    }}
+                  >
+                    {label}
+                  </span>
+                ))}
+              </div>
+
+              {specItems.length > 0 && (
+                <div className="grid grid-cols-2 gap-2 mb-3 md:grid-cols-4 md:gap-2.5 md:mb-4">
+                  {specItems.map(({ key, label }) => (
+                    <div
+                      key={key}
+                      className="min-w-0 px-2.5 py-2 rounded-[10px]"
+                      style={{
+                        background: "rgba(255,254,250,0.72)",
+                        border: "1px solid var(--ink-08)",
+                      }}
+                    >
+                      <p
+                        className="text-[9px] mb-1 truncate md:text-[10px]"
+                        style={{ fontFamily: "var(--font-mono)", color: "var(--ink-35)" }}
+                      >
+                        {label}
+                      </p>
+                      <p
+                        className="text-[12px] font-semibold truncate md:text-[13px]"
+                        style={{ color: "var(--ink)" }}
+                      >
+                        {drink.specs![key]}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {drink.description ? (
+                <p
+                  className="text-[13px] leading-[1.78] md:text-sm md:leading-[1.9]"
+                  style={{ color: "var(--ink-70)" }}
+                >
+                  {drink.description}
+                </p>
+              ) : (
+                <p className="text-[13px] leading-relaxed" style={{ color: "var(--ink-35)" }}>
+                  説明情報準備中
+                </p>
+              )}
+            </div>
+          </div>
+
           {/* ── CTA ── */}
           {isRecorded ? (
             <button
               onClick={() => setShowRecordModal(true)}
-              className="w-full rounded-xl py-3 text-sm font-semibold flex items-center justify-center gap-2"
+              className="w-full rounded-xl py-3 text-sm font-semibold flex items-center justify-center gap-2 mt-5"
               style={{
                 background: "var(--success)",
                 color: "white",
@@ -245,7 +258,7 @@ export default function DrinkPageClient({ drink, stores }: Props) {
                 if (!user) setShowLoginModal(true);
                 else setShowRecordModal(true);
               }}
-              className="w-full py-3 text-sm font-semibold active:opacity-70"
+              className="w-full py-3 text-sm font-semibold active:opacity-70 mt-5"
               style={{
                 background: "var(--amber)",
                 color: "var(--paper)",
@@ -341,7 +354,7 @@ export default function DrinkPageClient({ drink, stores }: Props) {
               >
                 飲める店
               </p>
-              <ul className="space-y-2">
+              <ul className="grid gap-2 md:grid-cols-2">
                 {stores.map((s) => (
                   <li key={s.id}>
                     <StoreCard store={s} />
@@ -390,7 +403,7 @@ export default function DrinkPageClient({ drink, stores }: Props) {
               詳細を見る →
             </Link>
           </div>
-        </div>
+        </main>
       </div>
     </>
   );
