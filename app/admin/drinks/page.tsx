@@ -6,6 +6,7 @@ import DrinkSpecFields from "@/components/DrinkSpecFields";
 
 const inp = "w-full border border-[#0D1B2A]/10 rounded-lg px-3 py-2 text-sm text-[#0D1B2A] bg-[#F8F3EC] outline-none focus:ring-1 focus:ring-[#E8A045] placeholder-[#0D1B2A]/30";
 const btn = "w-full bg-[#E8A045] text-white rounded-lg py-2 text-sm font-semibold";
+const label = "text-[11px] font-semibold text-[#0D1B2A]/50";
 
 function buildSpecs(fd: FormData): Record<string, string> | null {
   const specs: Record<string, string> = {};
@@ -92,87 +93,226 @@ export default async function DrinksPage({
     db.from("drinks").select("*, region:regions(name)").order("name"),
     db.from("regions").select("id, name").order("name"),
   ]);
+  const editingDrink = drinks?.find((d) => d.id === editId);
 
   return (
-    <div className="max-w-lg mx-auto px-5 py-6 pb-12">
-      <h1 className="text-xl font-bold text-[#0D1B2A] mb-6">お酒</h1>
+    <div className="mx-auto max-w-6xl px-5 py-8 pb-12 md:px-8">
+      {editingDrink && (
+        <div className="fixed inset-0 z-30 flex items-start justify-center overflow-y-auto bg-[#0D1B2A]/35 px-4 py-8 backdrop-blur-sm">
+          <div
+            className="w-full max-w-2xl overflow-hidden rounded-2xl border shadow-2xl"
+            style={{ background: "var(--paper-2)", borderColor: "var(--ink-08)" }}
+          >
+            <div
+              className="flex items-center justify-between gap-4 border-b px-5 py-4"
+              style={{ borderColor: "var(--ink-08)", background: "rgba(244,239,230,0.72)" }}
+            >
+              <div className="min-w-0">
+                <p
+                  className="mb-1 text-[10px] tracking-wider"
+                  style={{ fontFamily: "var(--font-mono)", color: "var(--ink-50)" }}
+                >
+                  EDIT DRINK
+                </p>
+                <h2
+                  className="truncate text-lg font-bold"
+                  style={{ fontFamily: "var(--font-serif)", color: "var(--ink)" }}
+                >
+                  {editingDrink.name}
+                </h2>
+              </div>
+              <a
+                href="/admin/drinks"
+                className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-full border text-lg leading-none"
+                style={{ borderColor: "var(--ink-08)", color: "var(--ink-50)", background: "var(--paper-2)" }}
+                aria-label="閉じる"
+              >
+                ×
+              </a>
+            </div>
 
-      <form action={addDrink} className="bg-white border border-[#0D1B2A]/10 rounded-xl p-4 mb-8 space-y-3">
-        <p className="text-xs font-semibold text-[#0D1B2A]/50 tracking-wide">追加</p>
-        <input name="name" required placeholder="銘柄名 *" className={inp} />
-        <input name="name_kana" placeholder="読み仮名" className={inp} />
-        <DrinkSpecFields listId="genres-add" />
-        <select name="region_id" required className={inp}>
-          <option value="">産地 *</option>
-          {regions?.map((r) => (
-            <option key={r.id} value={r.id}>{r.name}</option>
-          ))}
-        </select>
-        <textarea name="description" placeholder="説明" rows={3} className={inp} />
-        <PhotoInputSection />
-        <button type="submit" className={btn}>追加する</button>
-      </form>
-
-      <ul className="space-y-2">
-        {drinks?.map((d) => (
-          <li key={d.id} className="border border-[#0D1B2A]/10 rounded-xl bg-white">
-            {editId === d.id ? (
-              <form action={updateDrink} className="p-4 space-y-3">
-                <p className="text-xs font-semibold text-[#0D1B2A]/50 tracking-wide">編集</p>
-                <input type="hidden" name="id" value={d.id} />
-                <input name="name" required defaultValue={d.name} className={inp} />
-                <input name="name_kana" defaultValue={d.name_kana ?? ""} placeholder="読み仮名" className={inp} />
-                <DrinkSpecFields
-                  listId="genres-edit"
-                  defaultGenre={d.genre}
-                  defaultSpecs={d.specs as Record<string, string> | null}
-                />
-                <select name="region_id" required defaultValue={d.region_id} className={inp}>
-                  <option value="">産地 *</option>
+            <form action={updateDrink} className="space-y-3 p-5">
+              <input type="hidden" name="id" value={editingDrink.id} />
+              <div className="grid gap-3 md:grid-cols-2">
+                <Field labelText="銘柄名 *">
+                  <input name="name" required defaultValue={editingDrink.name} className={inp} />
+                </Field>
+                <Field labelText="読み仮名">
+                  <input name="name_kana" defaultValue={editingDrink.name_kana ?? ""} placeholder="読み仮名" className={inp} />
+                </Field>
+              </div>
+              <DrinkSpecFields
+                listId="genres-edit"
+                defaultGenre={editingDrink.genre}
+                defaultSpecs={editingDrink.specs as Record<string, string> | null}
+              />
+              <Field labelText="産地 *">
+                <select name="region_id" required defaultValue={editingDrink.region_id} className={inp}>
+                  <option value="">選択してください</option>
                   {regions?.map((r) => (
                     <option key={r.id} value={r.id}>{r.name}</option>
                   ))}
                 </select>
-                <textarea name="description" defaultValue={d.description ?? ""} placeholder="説明" rows={3} className={inp} />
-                <PhotoInputSection currentUrl={d.photo_url} currentName={d.name} />
-                <div className="flex gap-2">
-                  <button type="submit" className={btn}>保存</button>
-                  <a href="?" className="w-full text-center border border-[#0D1B2A]/20 rounded-lg py-2 text-sm text-[#0D1B2A]/60">キャンセル</a>
-                </div>
-              </form>
-            ) : (
-              <div className="flex items-center justify-between px-4 py-3">
-                <div className="flex items-center gap-3">
-                  {d.photo_url ? (
-                    <img src={d.photo_url} alt={d.name} className="h-10 w-8 object-contain rounded flex-shrink-0" />
-                  ) : (
-                    <div className="h-10 w-8 rounded flex-shrink-0" style={{ background: "repeating-linear-gradient(45deg, #f0ebe4, #f0ebe4 3px, #f8f3ec 3px, #f8f3ec 6px)" }} />
-                  )}
-                  <div>
-                    <p className="text-sm font-medium text-[#0D1B2A]">{d.name}</p>
-                    <p className="text-xs text-[#0D1B2A]/50 mt-0.5">
-                      {d.genre} · {(d.region as { name: string } | null)?.name ?? "—"}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1">
-                  <a href={`?edit=${d.id}`} className="text-xs text-[#E8A045] hover:text-[#c87d2e] px-2 py-1">編集</a>
-                  <form action={deleteDrink}>
-                    <input type="hidden" name="id" value={d.id} />
-                    <button type="submit" className="text-xs text-red-400 hover:text-red-600 px-2 py-1">削除</button>
-                  </form>
-                </div>
+              </Field>
+              <Field labelText="説明">
+                <textarea name="description" defaultValue={editingDrink.description ?? ""} placeholder="説明" rows={3} className={inp} />
+              </Field>
+              <PhotoInputSection currentUrl={editingDrink.photo_url} currentName={editingDrink.name} />
+              <div className="flex gap-2 pt-1">
+                <button type="submit" className={btn}>保存</button>
+                <a href="/admin/drinks" className="w-full rounded-lg border border-[#0D1B2A]/20 py-2 text-center text-sm text-[#0D1B2A]/60">キャンセル</a>
               </div>
-            )}
-          </li>
-        ))}
-      </ul>
+            </form>
+          </div>
+        </div>
+      )}
+
+      <div className="mb-6">
+        <p
+          className="mb-1 text-[11px] tracking-wider"
+          style={{ fontFamily: "var(--font-mono)", color: "var(--ink-50)" }}
+        >
+          DRINKS
+        </p>
+        <h1
+          className="text-[30px] font-bold leading-tight"
+          style={{ fontFamily: "var(--font-serif)", color: "var(--ink)" }}
+        >
+          お酒
+        </h1>
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed" style={{ color: "var(--ink-70)" }}>
+          銘柄名、ジャンル、産地、写真、スペックを登録します。
+        </p>
+      </div>
+
+      <div className="grid gap-5 lg:grid-cols-[360px_1fr] lg:items-start">
+        <section className="overflow-hidden rounded-xl border" style={{ borderColor: "var(--ink-08)", background: "var(--paper-2)" }}>
+          <div
+            className="border-b px-4 py-3"
+            style={{ borderColor: "var(--ink-08)", background: "rgba(244,239,230,0.56)" }}
+          >
+            <h2 className="text-base font-bold" style={{ fontFamily: "var(--font-serif)", color: "var(--ink)" }}>
+              新規追加
+            </h2>
+            <p className="mt-1 text-xs" style={{ color: "var(--ink-50)" }}>
+              必須項目を入力して銘柄を登録
+            </p>
+          </div>
+
+          <form action={addDrink} className="space-y-3 p-4">
+            <Field labelText="銘柄名 *">
+              <input name="name" required placeholder="例: 甲州きいろ香" className={inp} />
+            </Field>
+            <Field labelText="読み仮名">
+              <input name="name_kana" placeholder="例: こうしゅう きいろか" className={inp} />
+            </Field>
+            <DrinkSpecFields listId="genres-add" />
+            <Field labelText="産地 *">
+              <select name="region_id" required className={inp}>
+                <option value="">選択してください</option>
+                {regions?.map((r) => (
+                  <option key={r.id} value={r.id}>{r.name}</option>
+                ))}
+              </select>
+            </Field>
+            <Field labelText="説明">
+              <textarea name="description" placeholder="味わいや背景など" rows={3} className={inp} />
+            </Field>
+            <PhotoInputSection />
+            <button type="submit" className={btn}>追加する</button>
+          </form>
+        </section>
+
+        <section className="overflow-hidden rounded-xl border" style={{ borderColor: "var(--ink-08)", background: "var(--paper-2)" }}>
+          <div className="flex items-center justify-between gap-3 border-b px-4 py-3" style={{ borderColor: "var(--ink-08)" }}>
+            <div>
+              <h2 className="text-base font-bold" style={{ fontFamily: "var(--font-serif)", color: "var(--ink)" }}>
+                登録済み
+              </h2>
+              <p className="mt-1 text-xs" style={{ color: "var(--ink-50)" }}>
+                {drinks?.length ?? 0}件
+              </p>
+            </div>
+          </div>
+
+          <ul className="grid gap-3 p-4 md:grid-cols-2 xl:grid-cols-3">
+            {drinks?.map((d) => (
+              <li key={d.id}>
+                  <div
+                    className="flex h-full flex-col rounded-xl border p-3"
+                    style={{ borderColor: "var(--ink-08)", background: "var(--paper-2)" }}
+                  >
+                    <div className="mb-3 grid place-items-center">
+                      <div
+                        className="flex aspect-[2/3] w-[112px] items-center justify-center overflow-hidden rounded-lg p-1.5"
+                        style={{
+                          background: "var(--washi)",
+                          border: "1px solid var(--ink-04)",
+                        }}
+                      >
+                        {d.photo_url ? (
+                          <img src={d.photo_url} alt={d.name} className="h-full w-full object-contain drop-shadow-sm" />
+                        ) : (
+                          <div className="h-full w-full rounded" style={{ background: "repeating-linear-gradient(45deg, #f0ebe4, #f0ebe4 3px, #f8f3ec 3px, #f8f3ec 6px)", border: "1px solid var(--ink-08)" }} />
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-2">
+                        <p className="truncate text-base font-semibold" style={{ fontFamily: "var(--font-serif)", color: "var(--ink)" }}>
+                          {d.name}
+                        </p>
+                        <span
+                          className="mt-1.5 inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                          style={{
+                            background: "var(--amber-tint)",
+                            border: "1px solid rgba(200,137,61,0.22)",
+                            color: "var(--amber-dk)",
+                          }}
+                        >
+                          {d.genre}
+                        </span>
+                      </div>
+
+                      <p className="truncate text-xs" style={{ color: "var(--ink-50)" }}>
+                        産地: {(d.region as { name: string } | null)?.name ?? "—"}
+                      </p>
+                      {d.description && (
+                        <p className="mt-2 line-clamp-2 text-xs leading-relaxed" style={{ color: "var(--ink-70)" }}>
+                          {d.description}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="mt-3 flex items-center gap-2">
+                      <a href={`?edit=${d.id}`} className="flex-1 rounded-full border border-[#0D1B2A]/10 px-3 py-1.5 text-center text-xs font-semibold text-[#0D1B2A]/50">編集</a>
+                      <form action={deleteDrink} className="flex-1">
+                        <input type="hidden" name="id" value={d.id} />
+                        <button type="submit" className="w-full rounded-full border border-red-500/20 px-3 py-1.5 text-xs font-semibold text-red-500">削除</button>
+                      </form>
+                    </div>
+                  </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
     </div>
   );
 }
 
 const fileInp = "w-full text-sm text-[#0D1B2A]/60 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#E8A045]/10 file:text-[#E8A045] cursor-pointer";
 const urlInp = "w-full border border-[#0D1B2A]/10 rounded-lg px-3 py-2 text-sm text-[#0D1B2A] bg-[#F8F3EC] outline-none focus:ring-1 focus:ring-[#E8A045] placeholder-[#0D1B2A]/30";
+
+function Field({ labelText, children }: { labelText: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className={`${label} mb-1.5 block`}>{labelText}</span>
+      {children}
+    </label>
+  );
+}
 
 function PhotoInputSection({ currentUrl, currentName }: { currentUrl?: string | null; currentName?: string }) {
   return (
