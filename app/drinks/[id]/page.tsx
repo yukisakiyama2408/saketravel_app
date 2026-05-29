@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { getDrinkById, getStoresByDrink } from "@/lib/data";
 import DrinkPageClient from "@/components/DrinkPageClient";
 
+export const dynamic = "force-dynamic";
+
 export default async function DrinkDetailPage({
   params,
 }: {

@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { getRegionById, getDrinksByRegion, getStoresByRegion } from "@/lib/data";
 import RegionDetailClient from "@/components/RegionDetailClient";
 
+export const dynamic = "force-dynamic";
+
 export default async function RegionDetailPage({
   params,
 }: {
