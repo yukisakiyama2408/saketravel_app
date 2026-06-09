@@ -34,14 +34,18 @@ const TABS: { key: Tab; label: string }[] = [
 type Props = {
   region: Region | null;
   regionRecords?: RecordWithJoin[];
+  initialDrinkId?: string | null;
   onClose: () => void;
+  onDrinkSelected?: (drink: Drink | null) => void;
   onRecordSaved?: () => void;
 };
 
 export default function RegionPanel({
   region,
   regionRecords = [],
+  initialDrinkId,
   onClose,
+  onDrinkSelected,
   onRecordSaved,
 }: Props) {
   const { user } = useAuth();
@@ -65,9 +69,14 @@ export default function RegionPanel({
     }
     setActiveTab("climate");
     setSelectedDrink(null);
-    getDrinksByRegion(region.id).then(setDrinks);
+    getDrinksByRegion(region.id).then((nextDrinks) => {
+      setDrinks(nextDrinks);
+      if (!initialDrinkId) return;
+      const drink = nextDrinks.find((d) => d.id === initialDrinkId);
+      if (drink) setSelectedDrink(drink);
+    });
     getDishesByRegion(region.id).then(setDishes);
-  }, [region]);
+  }, [initialDrinkId, region]);
 
   useEffect(() => {
     if (!selectedDrink) {
@@ -161,8 +170,6 @@ export default function RegionPanel({
                     kicker={region.country}
                     title={region.name}
                     sub={drinks.length > 0 ? `${drinks.length}銘柄` : undefined}
-                    link="地域の詳細を見る"
-                    linkHref={`/regions/${region.id}`}
                     onClose={onClose}
                   />
 
@@ -195,44 +202,83 @@ export default function RegionPanel({
                   </div>
 
                   <div className="px-5 pt-4 leading-relaxed">
-                    {activeTab === "climate" && (() => {
-                      const hasStats = region.annual_snowfall || region.avg_temperature || region.sake_breweries != null || region.rice_variety;
-                      return (
-                        <div>
-                          <RegionPhoto region={region} />
+                    {activeTab === "climate" &&
+                      (() => {
+                        const hasStats =
+                          region.annual_snowfall ||
+                          region.avg_temperature ||
+                          region.sake_breweries != null ||
+                          region.rice_variety;
+                        return (
+                          <div>
+                            <RegionPhoto region={region} />
 
-                          {/* Stats grid */}
-                          {hasStats && (
-                            <div className="grid grid-cols-2 gap-2 mb-4">
-                              {[
-                                { label: "年間降雪量", value: region.annual_snowfall ?? "─" },
-                                { label: "年間平均気温", value: region.avg_temperature ?? "─" },
-                                { label: "酒蔵数", value: region.sake_breweries != null ? `${region.sake_breweries} 蔵` : "─" },
-                                { label: "代表的酒米", value: region.rice_variety ?? "─" },
-                              ].map(({ label, value }) => (
-                                <div
-                                  key={label}
-                                  className="rounded-lg px-3 py-2.5"
-                                  style={{ background: "var(--ink-04)" }}
-                                >
-                                  <p className="text-[10px] mb-0.5" style={{ color: "var(--ink-35)" }}>{label}</p>
-                                  <p className="text-sm font-bold" style={{ fontFamily: "var(--font-mono)", color: "var(--ink)" }}>{value}</p>
-                                </div>
-                              ))}
-                            </div>
-                          )}
+                            {/* Stats grid */}
+                            {hasStats && (
+                              <div className="grid grid-cols-2 gap-2 mb-4">
+                                {[
+                                  {
+                                    label: "年間降雪量",
+                                    value: region.annual_snowfall ?? "─",
+                                  },
+                                  {
+                                    label: "年間平均気温",
+                                    value: region.avg_temperature ?? "─",
+                                  },
+                                  {
+                                    label: "酒蔵数",
+                                    value:
+                                      region.sake_breweries != null
+                                        ? `${region.sake_breweries} 蔵`
+                                        : "─",
+                                  },
+                                  {
+                                    label: "代表的酒米",
+                                    value: region.rice_variety ?? "─",
+                                  },
+                                ].map(({ label, value }) => (
+                                  <div
+                                    key={label}
+                                    className="rounded-lg px-3 py-2.5"
+                                    style={{ background: "var(--ink-04)" }}
+                                  >
+                                    <p
+                                      className="text-[10px] mb-0.5"
+                                      style={{ color: "var(--ink-35)" }}
+                                    >
+                                      {label}
+                                    </p>
+                                    <p
+                                      className="text-sm font-bold"
+                                      style={{
+                                        fontFamily: "var(--font-mono)",
+                                        color: "var(--ink)",
+                                      }}
+                                    >
+                                      {value}
+                                    </p>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
 
-                          <p className="text-sm" style={{ color: "var(--ink-70)" }}>
-                            {region.climate ?? "情報準備中"}
-                          </p>
-                        </div>
-                      );
-                    })()}
+                            <p
+                              className="text-sm"
+                              style={{ color: "var(--ink-70)" }}
+                            >
+                              {region.climate ?? "情報準備中"}
+                            </p>
+                          </div>
+                        );
+                      })()}
                     {activeTab === "food" && (
                       <div>
                         <RegionPhoto region={region} />
 
-                        <p className="text-sm leading-relaxed" style={{ color: "var(--ink-70)" }}>
+                        <p
+                          className="text-sm leading-relaxed"
+                          style={{ color: "var(--ink-70)" }}
+                        >
                           {region.food_culture ?? "情報準備中"}
                         </p>
 
@@ -240,7 +286,10 @@ export default function RegionPanel({
                           <div className="mt-5">
                             <p
                               className="text-[11px] uppercase tracking-widest mb-3"
-                              style={{ fontFamily: "var(--font-mono)", color: "var(--ink-50)" }}
+                              style={{
+                                fontFamily: "var(--font-mono)",
+                                color: "var(--ink-50)",
+                              }}
                             >
                               名物 ─ Specialties
                             </p>
@@ -249,19 +298,27 @@ export default function RegionPanel({
                               style={{ scrollbarWidth: "none" }}
                             >
                               {dishes.map((dish) => (
-                                <div key={dish.id} className="flex-shrink-0" style={{ width: 90 }}>
+                                <div
+                                  key={dish.id}
+                                  className="flex-shrink-0"
+                                  style={{ width: 90 }}
+                                >
                                   {/* Photo placeholder */}
                                   <div
                                     className="rounded-lg"
                                     style={{
                                       width: 90,
                                       height: 70,
-                                      background: "repeating-linear-gradient(45deg, var(--canvas), var(--canvas) 4px, var(--paper) 4px, var(--paper) 8px)",
+                                      background:
+                                        "repeating-linear-gradient(45deg, var(--canvas), var(--canvas) 4px, var(--paper) 4px, var(--paper) 8px)",
                                     }}
                                   />
                                   <p
                                     className="text-xs font-bold mt-1.5 leading-tight"
-                                    style={{ fontFamily: "var(--font-serif)", color: "var(--ink)" }}
+                                    style={{
+                                      fontFamily: "var(--font-serif)",
+                                      color: "var(--ink)",
+                                    }}
                                   >
                                     {dish.name}
                                   </p>
@@ -301,7 +358,10 @@ export default function RegionPanel({
                               <DrinkCard
                                 drink={d}
                                 recorded={recordedDrinkIds.has(d.id)}
-                                onClick={() => setSelectedDrink(d)}
+                                onClick={() => {
+                                  setSelectedDrink(d);
+                                  onDrinkSelected?.(d);
+                                }}
                               />
                             </li>
                           ))
@@ -318,7 +378,10 @@ export default function RegionPanel({
                   {/* 5-1: Back button + SheetHeader */}
                   <div className="px-5 pt-3 pb-0">
                     <button
-                      onClick={() => setSelectedDrink(null)}
+                      onClick={() => {
+                        setSelectedDrink(null);
+                        onDrinkSelected?.(null);
+                      }}
                       className="text-xs font-medium flex items-center gap-1"
                       style={{ color: "var(--amber)" }}
                     >
@@ -330,8 +393,6 @@ export default function RegionPanel({
                     kicker={selectedDrink.genre}
                     title={selectedDrink.name}
                     sub={selectedDrink.name_kana ?? undefined}
-                    link="銘柄の詳細を見る"
-                    linkHref={`/drinks/${selectedDrink.id}`}
                     onClose={onClose}
                   />
 
@@ -372,13 +433,20 @@ export default function RegionPanel({
                       {/* Spec row */}
                       {(() => {
                         const parts = [
-                          selectedDrink.seimaibuai != null ? `精米 ${selectedDrink.seimaibuai}%` : null,
-                          selectedDrink.alcohol != null ? `ALC ${selectedDrink.alcohol}%` : null,
+                          selectedDrink.seimaibuai != null
+                            ? `精米 ${selectedDrink.seimaibuai}%`
+                            : null,
+                          selectedDrink.alcohol != null
+                            ? `ALC ${selectedDrink.alcohol}%`
+                            : null,
                         ].filter(Boolean);
                         return parts.length > 0 ? (
                           <p
                             className="text-[11px] mb-2"
-                            style={{ fontFamily: "var(--font-mono)", color: "var(--ink-35)" }}
+                            style={{
+                              fontFamily: "var(--font-mono)",
+                              color: "var(--ink-35)",
+                            }}
                           >
                             {parts.join(" · ")}
                           </p>

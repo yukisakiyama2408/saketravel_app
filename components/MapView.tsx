@@ -185,10 +185,16 @@ const worldRegionBorderLayer: LayerSpecification = {
 type Props = {
   regions: Region[];
   focusRegion?: Region | null;
+  focusDrinkId?: string | null;
   onFocusConsumed?: () => void;
 };
 
-export default function MapView({ regions, focusRegion, onFocusConsumed }: Props) {
+export default function MapView({
+  regions,
+  focusRegion,
+  focusDrinkId,
+  onFocusConsumed,
+}: Props) {
   const { user } = useAuth();
   const mapRef = useRef<MapRef>(null);
   const [selectedRegion, setSelectedRegion] = useState<Region | null>(null);
@@ -201,6 +207,14 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
     new Set(["sake", "shochu", "wine", "beer"])
   );
   const [regionGenreMap, setRegionGenreMap] = useState<Record<string, Genre[]>>({});
+
+  const replacePopupUrl = useCallback((params?: { region?: string; drink?: string }) => {
+    if (typeof window === "undefined") return;
+    const url = params
+      ? `/?${new URLSearchParams(params).toString()}`
+      : "/";
+    window.history.replaceState(null, "", url);
+  }, []);
 
   useEffect(() => {
     fetch("https://raw.githubusercontent.com/dataofjapan/land/master/japan.geojson")
@@ -341,11 +355,13 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
         {
           lat: regs.reduce((s, r) => s + r.latitude, 0) / regs.length,
           lng: regs.reduce((s, r) => s + r.longitude, 0) / regs.length,
-          count: regs.length,
+          count: userRecords.filter((record) =>
+            regs.some((region) => region.id === record.region_id)
+          ).length,
         },
       ])
     );
-  }, [filteredRegions]);
+  }, [filteredRegions, userRecords]);
 
   const handleSelectFromSearch = useCallback((region: Region) => {
     const map = mapRef.current?.getMap();
@@ -353,7 +369,8 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
       map.flyTo({ center: [region.longitude, region.latitude], zoom: 8, duration: 1500 });
     }
     setSelectedRegion(region);
-  }, []);
+    replacePopupUrl({ region: region.id });
+  }, [replacePopupUrl]);
 
   const handleMapClick = useCallback(async (e: MapMouseEvent) => {
     const map = mapRef.current?.getMap();
@@ -378,7 +395,11 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
       const regionId = prefFeatures[0].properties?.region_id as string | undefined;
       if (regionId) {
         const region = filteredRegions.find((r) => r.id === regionId);
-        if (region) { setSelectedRegion(region); return; }
+        if (region) {
+          setSelectedRegion(region);
+          replacePopupUrl({ region: region.id });
+          return;
+        }
       }
     }
 
@@ -388,10 +409,13 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
       const regionId = worldFeatures[0].properties?.region_id as string | undefined;
       if (regionId) {
         const region = filteredRegions.find((r) => r.id === regionId);
-        if (region) setSelectedRegion(region);
+        if (region) {
+          setSelectedRegion(region);
+          replacePopupUrl({ region: region.id });
+        }
       }
     }
-  }, [filteredRegions]);
+  }, [filteredRegions, replacePopupUrl]);
 
   return (
     <div className="relative w-full h-full">
@@ -464,6 +488,7 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
               onClick={(e) => {
                 e.originalEvent.stopPropagation();
                 setSelectedRegion(region);
+                replacePopupUrl({ region: region.id });
               }}
               style={{ cursor: "pointer" }}
             >
@@ -503,7 +528,15 @@ export default function MapView({ regions, focusRegion, onFocusConsumed }: Props
       <RegionPanel
         region={selectedRegion}
         regionRecords={selectedRegionRecords}
-        onClose={() => setSelectedRegion(null)}
+        initialDrinkId={focusDrinkId}
+        onClose={() => {
+          setSelectedRegion(null);
+          replacePopupUrl();
+        }}
+        onDrinkSelected={(drink) => {
+          if (drink) replacePopupUrl({ drink: drink.id });
+          else if (selectedRegion) replacePopupUrl({ region: selectedRegion.id });
+        }}
         onRecordSaved={() => {
           if (!user) return;
           getRecordsByUser(user.id).then(setUserRecords);

@@ -7,19 +7,28 @@ import { useAuth } from "@/components/AuthProvider";
 import { getRecordsByUser } from "@/lib/data";
 import type { RecordWithJoin } from "@/types";
 
-type GenreFilter = "all" | "sake" | "wine" | "beer";
+type GenreFilter = "all" | "sake" | "wine" | "beer" | "shochu";
 
 const GENRE_CHIPS: { key: GenreFilter; label: string }[] = [
   { key: "all", label: "すべて" },
   { key: "sake", label: "🍶 日本酒" },
   { key: "wine", label: "🍷 ワイン" },
   { key: "beer", label: "🍺 ビール" },
+  { key: "shochu", label: "🥃 焼酎" },
 ];
 
 const GENRE_EMOJI: Record<string, string> = {
   sake: "🍶",
   wine: "🍷",
   beer: "🍺",
+  shochu: "🥃",
+};
+
+const GENRE_COLORS: Record<string, { tint: string; accent: string }> = {
+  sake: { tint: "#E7F0EC", accent: "#5C8A66" },
+  wine: { tint: "#EEF1F6", accent: "#4E6E8E" },
+  beer: { tint: "#F7EFD9", accent: "#C8893D" },
+  shochu: { tint: "#F2E8DD", accent: "#A86F28" },
 };
 
 const COUNTRY_FLAGS: Record<string, string> = {
@@ -175,40 +184,71 @@ export default function RecordsPage() {
                 </div>
 
                 {/* Record cards */}
-                <ul className="space-y-2">
+                <ul className="grid gap-3 md:grid-cols-2">
                   {monthRecords.map((rec) => {
                     const genre = rec.drinks.genre_category ?? "sake";
                     const emoji = GENRE_EMOJI[genre] ?? "🍶";
+                    const colors = GENRE_COLORS[genre] ?? GENRE_COLORS.sake;
                     const flag =
                       COUNTRY_FLAGS[rec.regions.country] ?? "🌍";
 
                     return (
                       <li key={rec.id}>
                         <Link
-                          href={`/drinks/${rec.drink_id}`}
-                          className="flex items-start gap-3 rounded-xl px-3 py-3"
+                          href={`/?drink=${rec.drink_id}`}
+                          className="block h-full overflow-hidden rounded-lg transition-transform active:scale-[0.99]"
                           style={{
                             background: "var(--paper-2)",
                             border: "1px solid var(--ink-08)",
+                            boxShadow: "var(--sh-1)",
                           }}
                         >
-                          {/* Genre emoji icon */}
-                          <div
-                            className="flex-shrink-0 flex items-center justify-center text-xl rounded-xl"
-                            style={{
-                              width: 44,
-                              height: 44,
-                              background: "var(--amber-tint)",
-                            }}
-                          >
-                            {emoji}
-                          </div>
+                          <div className="grid grid-cols-[94px_1fr] gap-4 p-4">
+                            <div
+                              className="grid min-h-[132px] place-items-center rounded-md"
+                              style={{ background: colors.tint }}
+                            >
+                              {rec.drinks.photo_url ? (
+                                <img
+                                  src={rec.drinks.photo_url}
+                                  alt={rec.drinks.name}
+                                  className="h-[118px] max-w-[74px] object-contain drop-shadow-sm"
+                                />
+                              ) : (
+                                <BottlePlaceholder
+                                  label={rec.drinks.genre}
+                                  accent={colors.accent}
+                                />
+                              )}
+                            </div>
 
-                          {/* Content */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0 py-1">
+                              <div className="mb-2 flex items-center justify-between gap-2">
+                                <span
+                                  className="rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                                  style={{
+                                    background: colors.tint,
+                                    color: colors.accent,
+                                  }}
+                                >
+                                  {emoji} {rec.drinks.genre}
+                                </span>
+                                <span
+                                  className="text-[11px] flex-shrink-0"
+                                  style={{
+                                    fontFamily: "var(--font-mono)",
+                                    color: "var(--ink-35)",
+                                  }}
+                                >
+                                  {new Date(rec.date).toLocaleDateString("ja-JP", {
+                                    month: "numeric",
+                                    day: "numeric",
+                                  })}
+                                </span>
+                              </div>
+
                               <p
-                                className="text-[15px] font-bold leading-tight truncate"
+                                className="text-[20px] font-bold leading-tight"
                                 style={{
                                   fontFamily: "var(--font-serif)",
                                   color: "var(--ink)",
@@ -216,40 +256,41 @@ export default function RecordsPage() {
                               >
                                 {rec.drinks.name}
                               </p>
+                              {rec.drinks.name_kana && (
+                                <p
+                                  className="mt-1 text-[11px] truncate"
+                                  style={{
+                                    fontFamily: "var(--font-mono)",
+                                    color: "var(--ink-35)",
+                                  }}
+                                >
+                                  {rec.drinks.name_kana}
+                                </p>
+                              )}
                               <p
-                                className="text-[10px] flex-shrink-0 mt-0.5"
-                                style={{
-                                  fontFamily: "var(--font-mono)",
-                                  color: "var(--ink-35)",
-                                }}
+                                className="mt-3 text-xs"
+                                style={{ color: "var(--ink-50)" }}
                               >
-                                {new Date(rec.date).toLocaleDateString("ja-JP", {
-                                  month: "numeric",
-                                  day: "numeric",
-                                })}
+                                {flag} {rec.regions.country} / {rec.regions.name}
                               </p>
                             </div>
-                            <p
-                              className="text-[11px] mt-0.5"
-                              style={{ color: "var(--ink-50)" }}
-                            >
-                              {flag} {rec.regions.name} · {rec.drinks.genre}
-                            </p>
-                            {rec.memo && (
-                              <p
-                                className="text-xs mt-1 leading-relaxed"
-                                style={{
-                                  color: "var(--ink-70)",
-                                  display: "-webkit-box",
-                                  WebkitLineClamp: 2,
-                                  WebkitBoxOrient: "vertical" as const,
-                                  overflow: "hidden",
-                                }}
-                              >
-                                {rec.memo}
-                              </p>
-                            )}
                           </div>
+
+                          {rec.memo && (
+                            <p
+                              className="border-t px-4 py-3 text-xs leading-relaxed"
+                              style={{
+                                borderColor: "var(--ink-08)",
+                                color: "var(--ink-70)",
+                                display: "-webkit-box",
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: "vertical" as const,
+                                overflow: "hidden",
+                              }}
+                            >
+                              {rec.memo}
+                            </p>
+                          )}
                         </Link>
                       </li>
                     );
@@ -259,6 +300,54 @@ export default function RecordsPage() {
             );
           })
         )}
+      </div>
+    </div>
+  );
+}
+
+function BottlePlaceholder({
+  label,
+  accent,
+}: {
+  label: string;
+  accent: string;
+}) {
+  return (
+    <div className="relative" style={{ width: 58, height: 126 }}>
+      <div
+        className="absolute left-1/2 top-0 -translate-x-1/2 rounded-t-sm"
+        style={{
+          width: 20,
+          height: 31,
+          background: accent,
+        }}
+      />
+      <div
+        className="absolute bottom-0 left-1/2 -translate-x-1/2 rounded-md"
+        style={{
+          width: 58,
+          height: 103,
+          background:
+            "linear-gradient(90deg, rgba(255,255,255,0.46), rgba(255,255,255,0.1) 35%, rgba(13,27,42,0.08))",
+          border: `2px solid ${accent}`,
+        }}
+      />
+      <div
+        className="absolute left-1/2 -translate-x-1/2 rounded-sm px-1"
+        style={{
+          bottom: 28,
+          width: 46,
+          minHeight: 36,
+          background: "var(--paper-2)",
+          border: "1px solid var(--ink-08)",
+        }}
+      >
+        <p
+          className="py-1 text-center text-[11px] font-bold leading-tight"
+          style={{ fontFamily: "var(--font-serif)", color: "var(--ink)" }}
+        >
+          {label}
+        </p>
       </div>
     </div>
   );

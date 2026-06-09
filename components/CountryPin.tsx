@@ -28,7 +28,7 @@ export default function CountryPin({ flag, country, count }: Props) {
           boxShadow: "var(--sh-1)",
         }}
       >
-        {country} · {count}
+        {country} · {count}件
       </div>
     </div>
   );

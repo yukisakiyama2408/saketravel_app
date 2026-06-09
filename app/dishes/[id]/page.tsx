@@ -42,7 +42,7 @@ export default async function DishDetailPage({
               {pairingDrinks.map((d) => (
                 <li key={d.id}>
                   <Link
-                    href={`/drinks/${d.id}`}
+                    href={`/?drink=${d.id}`}
                     className="block border border-[#0D1B2A]/10 rounded-xl px-4 py-3 bg-white hover:bg-[#F8F3EC] transition-colors"
                   >
                     <div className="flex items-center justify-between">

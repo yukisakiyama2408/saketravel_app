@@ -7,6 +7,8 @@ const TAB_PATHS = ["/", "/me", "/me/records"];
 
 export default function TabBarWrapper() {
   const pathname = usePathname();
-  if (!TAB_PATHS.includes(pathname)) return null;
+  if (!TAB_PATHS.includes(pathname) && !pathname.startsWith("/me/records/")) {
+    return null;
+  }
   return <TabBar />;
 }

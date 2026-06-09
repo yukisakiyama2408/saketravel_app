@@ -292,7 +292,7 @@ export default function MyPage() {
                 return (
                   <Link
                     key={rec.id}
-                    href={`/drinks/${rec.drink_id}`}
+                    href={`/?drink=${rec.drink_id}`}
                     className="flex items-start gap-3"
                   >
                     {/* 縦罫線 */}
