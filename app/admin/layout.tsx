@@ -7,6 +7,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: "/admin/drinks", label: "お酒" },
     { href: "/admin/dishes", label: "料理" },
     { href: "/admin/stores", label: "店舗" },
+    { href: "/admin/feedback", label: "要望・不具合" },
   ];
 
   return (

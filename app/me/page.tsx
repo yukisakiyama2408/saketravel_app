@@ -27,6 +27,7 @@ const COUNTRY_FLAGS: Record<string, string> = {
 const MENU_ITEMS = [
   { label: "飲みたいリスト", icon: "♡" },
   { label: "お気に入り", icon: "☆" },
+  { label: "要望・不具合を報告", icon: "!", href: "/feedback" },
   { label: "アカウント設定", icon: "⚙" },
   { label: "通知", icon: "◎" },
   { label: "言語", icon: "◈" },
@@ -36,14 +37,12 @@ export default function MyPage() {
   const { user, loading, signOut } = useAuth();
   const router = useRouter();
   const [records, setRecords] = useState<RecordWithJoin[]>([]);
-  const [fetching, setFetching] = useState(true);
 
   useEffect(() => {
     if (loading) return;
     if (!user) { router.replace("/auth/login"); return; }
     getRecordsByUser(user.id).then((data) => {
       setRecords(data.sort((a, b) => b.date.localeCompare(a.date)));
-      setFetching(false);
     });
   }, [user, loading, router]);
 
@@ -346,24 +345,39 @@ export default function MyPage() {
             border: "1px solid var(--ink-08)",
           }}
         >
-          {MENU_ITEMS.map((item, i) => (
-            <button
-              key={item.label}
-              className="w-full flex items-center justify-between px-5 py-3.5 text-sm"
-              style={{
-                borderTop: i > 0 ? "1px solid var(--ink-04)" : undefined,
-                color: "var(--ink-70)",
-              }}
-            >
-              <span className="flex items-center gap-3">
-                <span style={{ color: "var(--ink-35)", fontSize: 16, lineHeight: 1 }}>
-                  {item.icon}
+          {MENU_ITEMS.map((item, i) => {
+            const content = (
+              <>
+                <span className="flex items-center gap-3">
+                  <span style={{ color: "var(--ink-35)", fontSize: 16, lineHeight: 1 }}>
+                    {item.icon}
+                  </span>
+                  {item.label}
                 </span>
-                {item.label}
-              </span>
-              <span style={{ color: "var(--ink-20)" }}>›</span>
-            </button>
-          ))}
+                <span style={{ color: "var(--ink-20)" }}>›</span>
+              </>
+            );
+
+            const className = "w-full flex items-center justify-between px-5 py-3.5 text-sm";
+            const style = {
+              borderTop: i > 0 ? "1px solid var(--ink-04)" : undefined,
+              color: "var(--ink-70)",
+            };
+
+            return item.href ? (
+              <Link key={item.label} href={item.href} className={className} style={style}>
+                {content}
+              </Link>
+            ) : (
+              <button
+              key={item.label}
+              className={className}
+              style={style}
+            >
+                {content}
+              </button>
+            );
+          })}
         </div>
 
         {/* Logout */}

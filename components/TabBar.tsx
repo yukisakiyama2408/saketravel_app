@@ -40,6 +40,24 @@ const tabs: Tab[] = [
     ),
   },
   {
+    href: "/feedback",
+    label: "報告",
+    icon: (active) => (
+      <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+        <path
+          d="M5 5.5A2.5 2.5 0 0 1 7.5 3h7A2.5 2.5 0 0 1 17 5.5v6.25a2.5 2.5 0 0 1-2.5 2.5H11L6.5 18v-3.75A2.5 2.5 0 0 1 4 11.75V5.5Z"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinejoin="round"
+          fill={active ? "currentColor" : "none"}
+          fillOpacity={active ? 0.12 : 0}
+        />
+        <path d="M11 6.5v3.75" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <path d="M11 12.25h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
     href: "/me",
     label: "マイページ",
     icon: (active) => (

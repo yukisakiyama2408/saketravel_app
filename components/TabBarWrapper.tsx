@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import TabBar from "@/components/TabBar";
 
-const TAB_PATHS = ["/", "/me", "/me/records"];
+const TAB_PATHS = ["/", "/feedback", "/me", "/me/records"];
 
 export default function TabBarWrapper() {
   const pathname = usePathname();

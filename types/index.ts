@@ -65,3 +65,27 @@ export type Store = {
   region_ids: string[] | null;
   drink_ids: string[] | null;
 };
+
+export type FeedbackType = "feature" | "bug" | "improvement";
+
+export type FeedbackStatus =
+  | "new"
+  | "reviewing"
+  | "planned"
+  | "in_progress"
+  | "done"
+  | "declined";
+
+export type FeedbackItem = {
+  id: string;
+  user_id: string;
+  reporter_email: string;
+  type: FeedbackType;
+  title: string;
+  description: string;
+  page_path: string | null;
+  status: FeedbackStatus;
+  admin_note: string | null;
+  created_at: string;
+  updated_at: string;
+};
